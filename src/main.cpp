@@ -8,6 +8,7 @@
 #define DHT22pin 22
 #define ONE_WIRE_BUS 24
 #define PRESSURE_SS 26
+#define POTENTIOMETER A14
 
 MyRTC rtc;
 MyDHT dht(DHT22pin);
@@ -61,6 +62,10 @@ void loop()
 
 	Serial.print(pressure.temperature());
 	Serial.println(" *C;");
+
+	Serial.print("Knob:		");
+	Serial.print((float)analogRead(POTENTIOMETER)*100/1023);
+	Serial.println(" %;");
 
 	Serial.println();
 	delay(1000);
