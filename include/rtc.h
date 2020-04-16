@@ -1,5 +1,4 @@
 #pragma once
-
 #include <RtcDS3231.h>
 #include <Wire.h>
 
@@ -11,7 +10,8 @@ private:
 public:
 	void init();
 
-	void printDateTime(const RtcDateTime &dt);
+	String dateString(const RtcDateTime &dt);
+	String timeString(const RtcDateTime &dt);
 
 	int getStatus();
 

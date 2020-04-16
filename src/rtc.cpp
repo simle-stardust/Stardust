@@ -11,7 +11,7 @@ void MyRTC::init()
   RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
   Serial.println(__DATE__);
   Serial.println(__TIME__);
-  printDateTime(compiled);
+  Serial.println(dateString(compiled));
   Serial.println();
 
   if (!RTC->IsDateTimeValid())
@@ -67,20 +67,30 @@ void MyRTC::init()
   RTC->SetSquareWavePin(DS3231SquareWavePin_ModeNone);
 }
 
-void MyRTC::printDateTime(const RtcDateTime &dt)
+String MyRTC::dateString(const RtcDateTime &dt)
 {
   char datestring[20];
 
   snprintf_P(datestring,
              countof(datestring),
-             PSTR("%02u/%02u/%04u %02u:%02u:%02u"),
-             dt.Month(),
-             dt.Day(),
+             PSTR("%04u/%02u/%02u"),
              dt.Year(),
+             dt.Month(),
+             dt.Day());
+  return datestring;
+}
+
+String MyRTC::timeString(const RtcDateTime &dt)
+{
+  char datestring[20];
+
+  snprintf_P(datestring,
+             countof(datestring),
+             PSTR("%02u_%02u_%02u"),
              dt.Hour(),
              dt.Minute(),
              dt.Second());
-  Serial.print(datestring);
+  return datestring;
 }
 
 int MyRTC::getStatus()
