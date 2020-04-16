@@ -1,5 +1,6 @@
 #include <Arduino.h>
-#include <SPI.h>
+#include "logger.h"
+#include "sdcard.h"
 #include "rtc.h"
 #include "dht22.h"
 #include "ds18b20.h"
@@ -9,64 +10,76 @@
 #define ONE_WIRE_BUS 24
 #define PRESSURE_SS 26
 #define POTENTIOMETER A14
+#define SD_CARD_SS 4
 
+MySD flash(SD_CARD_SS);
 MyRTC rtc;
 MyDHT dht(DHT22pin);
 MyDS18B20 temp(ONE_WIRE_BUS);
 TruStabilityPressureSensor pressure(PRESSURE_SS, 0, 15.0 );
 
+Logger logger;
+
+
+
 void setup()
 {
+	pinMode(13, OUTPUT);
 
+	Serial.begin(115200);
+	Serial.print("compiled: ");
+	Serial.print(__DATE__);
+	Serial.println(__TIME__);
 
-  Serial.begin(115200);
-  Serial.print("compiled: ");
-  Serial.print(__DATE__);
-  Serial.println(__TIME__);
+	SPI.begin();
+	rtc.init();
+	temp.init();
+	pressure.begin();
+	logger.init(&flash, &Serial, rtc.timeString(rtc.getTime()));
 
-  SPI.begin();
-
-  rtc.init();
-  temp.init();
-  pressure.begin();
 }
 
 void loop()
 {
+	String dataLine = "";
 	rtc.getStatus();
 
 	Serial.print("RTC:		");
-	rtc.printDateTime(rtc.getTime());
-
+	logger.add(rtc.dateString(rtc.getTime()));
+	Serial.print(",");
+	logger.add(rtc.timeString(rtc.getTime()));
 	Serial.print(",	");
-	rtc.getTemp().Print(Serial);
-	// you may also get the temperature as a float and print it
-	// Serial.print(temp.AsFloatDegC());
+	logger.add(rtc.getTemp().AsFloatDegC());
 	Serial.println(" *C;");
 
 	Serial.print("DHT22:		");
-	Serial.print(dht.getHumidity());
+	logger.add(dht.getHumidity());
 	Serial.print(" RH%,		");
 
-	Serial.print(dht.getTemperature());
+	logger.add(dht.getTemperature());
 	Serial.println(" *C;");
 
 	Serial.print("DS18B20:				");
-	Serial.print(temp.getTemperature());
+	logger.add(temp.getTemperature());
 	Serial.println(" *C;");
 
 	pressure.readSensor();
 	Serial.print("Pressure:	");
-	Serial.print(pressure.pressure());
+	logger.add(pressure.pressure());
 	Serial.print(" psi,		");
 
-	Serial.print(pressure.temperature());
+	logger.add(pressure.temperature());
 	Serial.println(" *C;");
 
 	Serial.print("Knob:		");
-	Serial.print((float)analogRead(POTENTIOMETER)*100/1023);
+	logger.add((float)analogRead(POTENTIOMETER)*100/1023);
 	Serial.println(" %;");
 
 	Serial.println();
-	delay(1000);
+
+	logger.save();
+	digitalWrite(13, HIGH);
+	delay(500);
+	digitalWrite(13, LOW);
+	delay(500);
 }
