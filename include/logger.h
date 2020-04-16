@@ -13,6 +13,7 @@ class Logger {
 		mySerial = serial;
 		myFlash = flash;
 		myFlash->init(name);
+		myFlash->writeLine("Date,Time,RTC_Temp,DHT_Humid,DHT_Temp,DS_Temp,Pressure,Temperature,Knob");
 	};
 
 	void add(String value) {
