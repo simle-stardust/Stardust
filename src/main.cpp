@@ -12,14 +12,21 @@
 #define POTENTIOMETER A14
 #define SD_CARD_SS 4
 
+
+OneWire oneWire(ONE_WIRE_BUS);
 MySD flash(SD_CARD_SS);
 MyRTC rtc;
 MyDHT dht(DHT22pin);
-MyDS18B20 temp(ONE_WIRE_BUS);
+MyDS18B20 temp;
 TruStabilityPressureSensor pressure(PRESSURE_SS, 0, 15.0 );
 
 Logger logger;
 
+DallasTemperature sensors(&oneWire);
+
+int numberOfDevices; // Number of temperature devices found
+
+DeviceAddress tempDeviceAddress; 
 
 
 void setup()
@@ -33,7 +40,7 @@ void setup()
 
 	SPI.begin();
 	rtc.init();
-	temp.init();
+	temp.init(oneWire);
 	pressure.begin();
 	logger.init(&flash, &Serial, rtc.timeString(rtc.getTime()));
 
@@ -58,10 +65,16 @@ void loop()
 
 	logger.add(dht.getTemperature());
 	Serial.println(" *C;");
-
-	Serial.print("DS18B20:				");
-	logger.add(temp.getTemperature());
-	Serial.println(" *C;");
+	
+	temp.update();
+	for (int i = 0; i < temp.getNumberOfDevices(); i++)
+	{
+		Serial.print("DS18B20 [");
+		Serial.print(i);
+		Serial.print("]:				");
+		logger.add(temp.getTemperature(i));
+		Serial.println(" *C;");
+	}
 
 	pressure.readSensor();
 	Serial.print("Pressure:	");

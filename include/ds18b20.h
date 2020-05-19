@@ -5,16 +5,18 @@ class MyDS18B20
 {
 private:
 	int pin;
-	int numberOfSensors;
-	float temperature;
+	int numberOfDevices;
+	float temperature[10];
+	DeviceAddress tempDeviceAddress;
 	DallasTemperature *sensors;
-	DeviceAddress thermometers;
-	void readSensors();
 	void printAddress(DeviceAddress deviceAddress);
 	uint8_t findDevices();
 
 public:
-	MyDS18B20(int _pin);
-	void init();
-	float getTemperature();
+	void init(OneWire oneWire);
+	void update();
+	float readTemperature(DeviceAddress deviceAddress);
+	float getTemperature(int i);
+	int getNumberOfDevices();
+	void printTemperature(DeviceAddress deviceAddress);
 };

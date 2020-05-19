@@ -1,20 +1,20 @@
 #include "ds18b20.h"
 
-MyDS18B20::MyDS18B20(int _pin)
+void MyDS18B20::init(OneWire oneWire)
 {
-	pin = _pin;
-	OneWire oneWire(_pin);
-	sensors = new DallasTemperature(&oneWire);
-}
 
-void MyDS18B20::init()
-{
-	Serial.print("Locating devices...");
+	sensors = new DallasTemperature(&oneWire);
 	sensors->begin();
+
+	// Grab a count of devices on the wire
+	numberOfDevices = sensors->getDeviceCount();
+
+	// locate devices on the bus
+	Serial.print("Locating devices...");
+
 	Serial.print("Found ");
-	numberOfSensors = sensors->getDeviceCount();
-	Serial.print(numberOfSensors, DEC);
-	Serial.println(" temperature sensors.");
+	Serial.print(numberOfDevices, DEC);
+	Serial.println(" devices.");
 
 	// report parasite power requirements
 	Serial.print("Parasite power is: ");
@@ -23,40 +23,67 @@ void MyDS18B20::init()
 	else
 		Serial.println("OFF");
 
-	if (!sensors->getAddress(thermometers, 0))
+	// Loop through each device, print out address
+	for (int i = 0; i < numberOfDevices; i++)
 	{
-		Serial.println("Unable to find address for Device 0");
+		// Search the wire for address
+		if (sensors->getAddress(tempDeviceAddress, i))
+		{
+			Serial.print("Found device ");
+			Serial.print(i, DEC);
+			Serial.print(" with address: ");
+			printAddress(tempDeviceAddress);
+			Serial.println();
+
+			Serial.print("Setting resolution to ");
+			Serial.println(12, DEC);
+
+			sensors->setResolution(tempDeviceAddress, 12);
+
+			Serial.print("Resolution actually set to: ");
+			Serial.print(sensors->getResolution(tempDeviceAddress), DEC);
+			Serial.println();
+		}
+		else
+		{
+			Serial.print("Found ghost device at ");
+			Serial.print(i, DEC);
+			Serial.print(" but could not detect address. Check power and cabling");
+		}
 	}
-	else
-	{
-		Serial.print("Device 0 Address: ");
-		printAddress(thermometers);
-		Serial.println();
-
-		Serial.print("Device 0 Resolution: ");
- 		Serial.print(sensors->getResolution(thermometers), DEC); 
-  		Serial.println();
-	};
-
-	sensors->setResolution(thermometers, 9);
 }
-
-void MyDS18B20::readSensors()
+void MyDS18B20::update()
 {
 	sensors->requestTemperatures();
-	temperature = sensors->getTempC(thermometers);
+
+	for (int i = 0; i < numberOfDevices; i++)
+	{
+		if (sensors->getAddress(tempDeviceAddress, i))
+		{
+			float tempC = sensors->getTempC(tempDeviceAddress);
+			if (tempC == DEVICE_DISCONNECTED_C)
+			{
+				Serial.println("Error: Could not read temperature data");
+			}
+			temperature[i] = tempC;
+		}
+	}
 }
 
-float MyDS18B20::getTemperature() {
-	readSensors();
-	return temperature;
+float MyDS18B20::getTemperature(int i) {
+	return temperature[i];
+}
+
+int  MyDS18B20::getNumberOfDevices() {
+	return numberOfDevices;
 }
 
 void MyDS18B20::printAddress(DeviceAddress deviceAddress)
 {
-  for (uint8_t i = 0; i < 8; i++)
-  {
-    if (deviceAddress[i] < 16) Serial.print("0");
-    Serial.print(deviceAddress[i], HEX);
-  }
+	for (uint8_t i = 0; i < 8; i++)
+	{
+		if (deviceAddress[i] < 16)
+			Serial.print("0");
+		Serial.print(deviceAddress[i], HEX);
+	}
 }
