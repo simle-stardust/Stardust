@@ -1,120 +1,87 @@
-#include <Arduino.h>
-#include <Wire.h>
-#include <Adafruit_PWMServoDriver.h>
+#include <servo.h>
 
-#define SERVOMIN  100 // This is the 'minimum' pulse length count (out of 4096)
-#define SERVOMAX  600 // This is the 'maximum' pulse length count (out of 4096)
-#define SERVO_FREQ 60 // Analog servos run at ~50 Hz updates
-#define TIME_DEADZONE 2000
-
-#define ADDRESS 0x40
-
-#define SERVO_DC 47
-
-struct servo_status {
-	bool status = 0;
-	bool desired = 0;
+MyServo::MyServo(unsigned int number) {
+	pwm = new Adafruit_PWMServoDriver(ADDRESS);
+	servoNumber = number;
+	lastOperation = millis();
 };
 
+void MyServo::init() {
 
-class MyServo {
-	public:
+	pinMode(SERVO_DC, OUTPUT);
+	digitalWrite(SERVO_DC, LOW);
 
-	Adafruit_PWMServoDriver *pwm;
+	pwm->begin();
 
-	unsigned int servoNumber = 0;
-	struct servo_status servos[16];
+	pwm->setOscillatorFrequency(27000000);
+	pwm->setPWMFreq(SERVO_FREQ); 
+}
 
-	uint8_t servo_pointer = 0;
+void MyServo::reset() {
+	for (uint8_t servo = 0; servo < servoNumber; servo++) {
+		pwm->setPin(servo, 0);
+	}
+}
 
-	unsigned long lastOperation = 0;
+void MyServo::setOpen(uint8_t servo) {
+	servos[servo-1].desired = 1;
+	Serial.print("Set ");
+	Serial.print(servo);
+	Serial.println(" to Open");
+}
 
-	MyServo(unsigned int number) {
-		pwm = new Adafruit_PWMServoDriver(ADDRESS);
-		servoNumber = number;
-		lastOperation = millis();
-	};
+void MyServo::setClosed(uint8_t servo) {
+	servos[servo-1].desired = 0;
+	Serial.print("Set ");
+	Serial.print(servo);
+	Serial.println(" to Closed");
+}
 
-	void init() {
+bool MyServo::getStatus(uint8_t servo) {
+	return servos[servo-1].status;
+}
 
-		pinMode(SERVO_DC, OUTPUT);
+void MyServo::tick() {		
+	if(servo_pointer > servoNumber-1) servo_pointer = 0;
+	if(millis() - lastOperation > TIME_DEADZONE) {
+		reset();
 		digitalWrite(SERVO_DC, LOW);
-
-		pwm->begin();
-
-		pwm->setOscillatorFrequency(27000000);
-  		pwm->setPWMFreq(SERVO_FREQ); 
-	}
-
-	void reset() {
-		for (uint8_t servo = 0; servo < servoNumber; servo++) {
-			pwm->setPin(servo, 0);
+		if(servos[servo_pointer].desired != servos[servo_pointer].status) {
+			if(servos[servo_pointer].desired == 1) open(servo_pointer + 1);
+			if(servos[servo_pointer].desired == 0) close(servo_pointer + 1);
+			servo_pointer++;
+		} else {
+			servo_pointer++;
+			tick();
 		}
 	}
+}
 
-	void setOpen(uint8_t servo) {
-		servos[servo-1].desired = 1;
-		Serial.print("Set ");
-		Serial.print(servo);
-		Serial.println(" to Open");
+bool MyServo::ready() {
+	for(uint8_t i = 0; i < servoNumber; ++i) {
+		if(servos[i].desired != servos[i].status) return 0;
 	}
+	return 1;
+}
 
-	void setClosed(uint8_t servo) {
-		servos[servo-1].desired = 0;
-		Serial.print("Set ");
-		Serial.print(servo);
-		Serial.println(" to Closed");
-	}
+void MyServo::open(uint8_t servo) {
+	digitalWrite(SERVO_DC, HIGH);
+	delay(10);
+	pwm->setPWM(servo, 0, SERVOMAX);
+	servos[servo-1].status = 1;
+	lastOperation = millis();
+	
+	Serial.print("Opened ");
+	Serial.println(servo);
+}
 
-	bool getStatus(uint8_t servo) {
-		return servos[servo-1].status;
-	}
+void MyServo::close(uint8_t servo) {
+	digitalWrite(SERVO_DC, HIGH);
+	delay(10);
+	pwm->setPWM(servo, 0, SERVOMIN);
+	servos[servo-1].status = 0;
+	lastOperation = millis();
 
-	void tick() {		
-		if(servo_pointer > servoNumber-1) servo_pointer = 0;
-		if(millis() - lastOperation > TIME_DEADZONE) {
-			reset();
-			digitalWrite(SERVO_DC, LOW);
-
-			if(servos[servo_pointer].desired != servos[servo_pointer].status) {
-				if(servos[servo_pointer].desired == 1) open(servo_pointer + 1);
-				if(servos[servo_pointer].desired == 0) close(servo_pointer + 1);
-				servo_pointer++;
-			} else {
-				servo_pointer++;
-				tick();
-			}
-		}
-	}
-
-	bool ready() {
-		for(uint8_t i = 0; i < servoNumber; ++i) {
-			if(servos[i].desired != servos[i].status) return 0;
-		}
-		return 1;
-	}
-
-	private:
-
-	void open(uint8_t servo) {
-		digitalWrite(SERVO_DC, HIGH);
-		delay(10);
-		pwm->setPWM(servo, 0, SERVOMAX);
-		servos[servo-1].status = 1;
-		lastOperation = millis();
-
-		Serial.print("Opened ");
-		Serial.println(servo);
-	}
-
-	void close(uint8_t servo) {
-		digitalWrite(SERVO_DC, HIGH);
-		delay(10);
-		pwm->setPWM(servo, 0, SERVOMIN);
-		servos[servo-1].status = 0;
-		lastOperation = millis();
-
-		Serial.print("Closed ");
-		Serial.println(servo);
-	}
-};
+	Serial.print("Closed ");
+	Serial.println(servo);
+}
