@@ -3,10 +3,10 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 
-#define SERVOMIN  100 // This is the 'minimum' pulse length count (out of 4096)
+#define SERVOMIN  300 // This is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  600 // This is the 'maximum' pulse length count (out of 4096)
-#define SERVO_FREQ 60 // Analog servos run at ~50 Hz updates
-#define TIME_DEADZONE 2000
+#define SERVO_FREQ 60
+#define TIME_DEADZONE 1000
 
 #define ADDRESS 0x40
 
@@ -18,7 +18,7 @@ struct servo_status {
 };
 
 class MyServo {
-	private:
+private:
 	Adafruit_PWMServoDriver *pwm;
 
 	unsigned int servoNumber = 0;
@@ -31,7 +31,7 @@ class MyServo {
 	void open(uint8_t servo);
 	void close(uint8_t servo);
 
-	public:
+public:
 	MyServo(unsigned int number);
 	void init();
 	void tick();

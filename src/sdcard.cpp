@@ -1,79 +1,87 @@
 #include "sdcard.h"
 
-MySD::MySD(int chipSelect)
-{
+MySD::MySD(int _chipSelect) {
+    chipSelect = _chipSelect;
+}
+
+bool MySD::init(String name,  HardwareSerial *serial) {
+  mySerial = serial;
+  SPI.begin();
 	pinMode(SS, OUTPUT);
-
-	if (!SD.begin(chipSelect))
+  if (!SD.begin(chipSelect))
 	{
-		Serial.println("initialization failed!");
-		return;
+		mySerial->println("initialization failed!");
+		return 0;
 	}
-	Serial.println("initialization done.");
+	mySerial->println("initialization done.");
+  
+	filename = name + ".txt";
+	mySerial->print("Logging to ");
+	mySerial->println(filename.c_str());
+	myFile = SD.open(filename.c_str(), FILE_WRITE);
+	myFile.close();
 
-	Serial.print("\nCard type: ");
+  return status();
+}
+
+bool MySD::status() {
+
+	mySerial->print("\nCard type: ");
   switch(card.type()) {
     case SD_CARD_TYPE_SD1:
-      Serial.println("SD1");
+      mySerial->println("SD1");
       break;
     case SD_CARD_TYPE_SD2:
-      Serial.println("SD2");
+      mySerial->println("SD2");
       break;
     case SD_CARD_TYPE_SDHC:
-      Serial.println("SDHC");
+      mySerial->println("SDHC");
       break;
     default:
-      Serial.println("Unknown");
+      mySerial->println("Unknown");
   }
 
   // Now we will try to open the 'volume'/'partition' - it should be FAT16 or FAT32
   if (!volume.init(card)) {
-    Serial.println("Could not find FAT16/FAT32 partition.\nMake sure you've formatted the card");
-    return;
+    mySerial->println("Could not find FAT16/FAT32 partition.\nMake sure you've formatted the card");
+    return 0;
   }
 
 
   // print the type and size of the first FAT-type volume
   uint32_t volumesize;
-  Serial.print("\nVolume type is FAT");
-  Serial.println(volume.fatType(), DEC);
-  Serial.println();
+  mySerial->print("\nVolume type is FAT");
+  mySerial->println(volume.fatType(), DEC);
+  mySerial->println();
   
   volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
   volumesize *= volume.clusterCount();       // we'll have a lot of clusters
   volumesize *= 512;                            // SD card blocks are always 512 bytes
-  Serial.print("Volume size (bytes): ");
-  Serial.println(volumesize);
-  Serial.print("Volume size (Kbytes): ");
+  mySerial->print("Volume size (bytes): ");
+  mySerial->println(volumesize);
+  mySerial->print("Volume size (Kbytes): ");
   volumesize /= 1024;
-  Serial.println(volumesize);
-  Serial.print("Volume size (Mbytes): ");
+  mySerial->println(volumesize);
+  mySerial->print("Volume size (Mbytes): ");
   volumesize /= 1024;
-  Serial.println(volumesize);
+  mySerial->println(volumesize);
 
   
-  Serial.println("\nFiles found on the card (name, date and size in bytes): ");
+  mySerial->println("\nFiles found on the card (name, date and size in bytes): ");
   root.openRoot(volume);
   
   // list all files in the card with date and size
   root.ls(LS_R | LS_DATE | LS_SIZE);
-}
-
-bool MySD::init(String name) {
-	filename = name + ".txt";
-	Serial.print("Logging to ");
-	Serial.println(filename.c_str());
-	myFile = SD.open(filename.c_str(), FILE_WRITE);
-	myFile.close();
+  return 1;
 }
 
 bool MySD::writeLine(String line)
 {
 	myFile = SD.open(filename.c_str(), FILE_WRITE);
 
-	// if the file opened okay, write to it:
 	if (myFile)
 	{
+    // if the file opened okay, write to it:
 		myFile.println(line);
 		// close the file:
 		myFile.close();
@@ -82,7 +90,7 @@ bool MySD::writeLine(String line)
 	else
 	{
 		// if the file didn't open, print an error:
-		Serial.println("error opening file");
+		mySerial->println("error opening file");
 		return 1;
 	}
 };
