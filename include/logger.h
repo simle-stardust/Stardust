@@ -5,12 +5,12 @@
 class Logger {
 	private:
 	String log = "";
-	MySD *myFlash;
+	MySD *flash;
 	public:
 
-	void init(MySD *flash) {
-		myFlash = flash;
-		myFlash->writeLine("Date,Time,RTC_Temp,DHT_Humid,DHT_Temp,DS_Temp,Pressure,Temperature,Knob");
+	void init(MySD *_flash) {
+		flash = _flash;
+		flash->writeLine("Date,Time,RTC_Temp,DHT_Humid,DHT_Temp,DS_Temp,Pressure,Temperature");
 	};
 
 	void add(String value) {
@@ -30,9 +30,11 @@ class Logger {
 
 	void save() {
 		log += "\n";
-		Serial.println(log);
-		myFlash->writeLine(log);
+		flash->writeLine(log);
 		log = "";
 	}
 
+	String line() {
+		return log;
+	}
 };
