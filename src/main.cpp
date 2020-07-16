@@ -1,141 +1,161 @@
 #include <Arduino.h>
-#include "logger.h"
 #include "sdcard.h"
 #include "rtc.h"
-#include "dht22.h"
-#include "ds18b20.h"
 #include "servo.h"
-#include <HoneywellTruStabilitySPI.h>
+#include "sensors.h"
 
-#define DHT22_main 33
-#define DHT22_mech 27
-#define DHT22_sens 41
-#define ONE_WIRE_main 35
-#define ONE_WIRE_mech 31
-#define ONE_WIRE_sens 37
-#define PRESSURE_SS_main 25
-#define PRESSURE_SS_sens 39
-#define POTENTIOMETER A14
+#include <EEPROM.h>
+
 #define SD_CARD_SS 4
+#define BUTTON_PIN 46
 
-
-OneWire onewire_main(ONE_WIRE_main);
-OneWire onewire_sens(ONE_WIRE_sens);
 MySD flash(SD_CARD_SS);
 MyRTC rtc;
-MyDHT dht_main(DHT22_main);
-MyDHT dht_sens(DHT22_sens);
-MyDS18B20 temp_main;
-MyDS18B20 temp_sens;
-TruStabilityPressureSensor pressure_main(PRESSURE_SS_main, -15.0, 15.0 );
-TruStabilityPressureSensor pressure_sens(PRESSURE_SS_sens, -15.0, 15.0 );
-
+MySensors sensors;
 MyServo servo(2);
 
-Logger logger;
-
-uint16_t servo_num = 1;
 bool close = 0;
 
+struct debounce
+{
+	int state = 0;
+	int lastState = 0;
+	int time = 0;
+};
+struct debounce button;
+
+int loopTimer;
+
+int flightPhase = 0;
+
+String message;
 
 void setup()
 {
 	pinMode(13, OUTPUT);
+	pinMode(BUTTON_PIN, INPUT);
 
 	Serial.begin(115200);
 	Serial.print("compiled: ");
-	Serial.print(__DATE__);
+	Serial.println(__DATE__);
 	Serial.println(__TIME__);
 
 	servo.init();
 	rtc.init();
-	temp_main.init(onewire_main);
-	temp_sens.init(onewire_sens);
-	pressure_main.begin();
-	pressure_sens.begin();
-	flash.init(rtc.timeString(rtc.getTime()), &Serial);
-	logger.init(&flash);
 
+	// Year/Month/Day directory with file named after init time.
+	flash.init(rtc.dateString(rtc.getTime()), rtc.timeString(rtc.getTime()));
+	sensors.init(&rtc, &flash);
 
-	for(uint8_t i = 1; i < 7; ++i) {
-		servo.setClosed(i);
-	}
+	flightPhase = EEPROM.read(0);
+
+	button.time = millis();
 }
 
 void loop()
 {
-	if(servo.ready()) {
-		Serial.println("Finished Queue");
-		for(uint8_t i = 1; i < 7; ++i) {
-			if(servo.getStatus(i) == 1) servo.setClosed(i);
-			if(servo.getStatus(i) == 0) servo.setOpen(i);
+
+	loopTimer = millis();
+	digitalWrite(13, HIGH);
+
+	button.state = digitalRead(BUTTON_PIN);
+	if (button.state != button.lastState)
+	{
+		if (button.state == LOW)
+		{
+			// clicked
+			Serial.println("ON");
+			button.time = millis();
+		}
+		if (button.state == HIGH)
+		{
+			// unclicked
+			Serial.println("OFF");
+			button.time -= millis();
+			button.time *= -1;
+			Serial.print("On for ");
+			Serial.println(button.time);
+
+			if (button.time > 100 && button.time < 500)
+			{
+				flightPhase--;
+				Serial.print("\n Advancing to Phase: ");
+				Serial.println(flightPhase);
+			}
+
+			if (button.time > 500 && button.time < 2000)
+			{
+				flightPhase++;
+				Serial.print("\n Advancing to Phase: ");
+				Serial.println(flightPhase);
+			}
+		}
+		button.lastState = button.state;
+	}
+
+	if (Serial.available())
+	{
+		char c = Serial.read(); //gets one byte from serial buffer
+		if (c == '\n')			//looks for end of data packet marker
+		{
+			Serial.read();			 //gets rid of following \r
+			Serial.println(message); //prints string to serial port out
+
+			//do stuff with captured message
+			if (message.indexOf("NextPhase") != -1)
+				flightPhase++;
+			if (message.indexOf("PrevPhase") != -1)
+				flightPhase--;
+
+			message = ""; //clears variable for new input
+		}
+		else
+		{
+			message += c; //makes the string message
 		}
 	}
 
-	servo.tick();
+	// Serial.print("Flight phase: ");
+	// Serial.print(flightPhase);
+	sensors.tick();
+	EEPROM.update(0, flightPhase);
 
-	rtc.getStatus();
-	Serial.print("RTC:		");
-	logger.add(rtc.dateString(rtc.getTime()));
-	Serial.print(",");
-	logger.add(rtc.timeString(rtc.getTime()));
-	Serial.print(",	");
-	logger.add(rtc.getTemp().AsFloatDegC());
-	Serial.println(" *C;");
-
-	Serial.print("DHT22 main:	");
-	logger.add(dht_main.getHumidity());
-	Serial.print(" RH%,		");
-
-	logger.add(dht_main.getTemperature());
-	Serial.println(" *C;");
-
-	Serial.print("DHT22 sens:	");
-	logger.add(dht_sens.getHumidity());
-	Serial.print(" RH%,		");
-
-	logger.add(dht_sens.getTemperature());
-	Serial.println(" *C;");
-	
-	temp_main.update();
-	for (int i = 0; i < temp_main.getNumberOfDevices(); i++)
+	switch (flightPhase)
 	{
-		Serial.print("DS18B20 main [");
-		Serial.print(i);
-		Serial.print("]:				");
-		logger.add(temp_main.getTemperature(i));
-		Serial.println(" *C;");
+	default:
+		if (flightPhase < 0)
+			flightPhase = 0;
+		if (flightPhase > 4)
+			flightPhase = 4;
+	case 0: // Pre-launch
+		//Serial.println(" Awaiting liftoff");
+		break;
+	case 1: // Flight
+		// Serial.println("In Flight");
+
+		break;
+	case 2: // Sampling ON
+		// Serial.println(" Sampling ON");
+		servo.openSequence();
+		if (!servo.ready())
+			servo.tick();
+
+		break;
+	case 3: // Sampling OFF
+		// Serial.println(" Sampling OFF - Safing");
+		servo.closeSequence();
+		if (!servo.ready())
+			servo.tick();
+		break;
+	case 4: // After Launch
+		// Serial.println(" Mission complete");
+
+		break;
 	}
 
-	temp_sens.update();
-	for (int i = 0; i < temp_sens.getNumberOfDevices(); i++)
-	{
-		Serial.print("DS18B20 sens [");
-		Serial.print(i);
-		Serial.print("]:				");
-		logger.add(temp_sens.getTemperature(i));
-		Serial.println(" *C;");
-	}
-
-	pressure_main.readSensor();
-	Serial.print("Pressure main:	");
-	logger.add(pressure_main.pressure());
-	Serial.print(" psi,		");
-
-	logger.add(pressure_main.temperature());
-	Serial.println(" *C;");
-
-	pressure_sens.readSensor();
-	Serial.print("Pressure sens:	");
-	logger.add(pressure_sens.pressure());
-	Serial.print(" psi,		");
-
-	logger.add(pressure_sens.temperature());
-	Serial.println(" *C;");
-
-	logger.save();
-
-	digitalWrite(13, HIGH);
-	delay(997);
+	loopTimer -= millis();
 	digitalWrite(13, LOW);
+	//Serial.print("Loop time: ");
+	//Serial.println(loopTimer * -1);
+	delay(100);
 }
