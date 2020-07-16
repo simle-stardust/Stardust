@@ -6,15 +6,13 @@
 
 #include <EEPROM.h>
 
-#define SD_CARD_SS 4
 #define BUTTON_PIN 46
 
-MySD flash(SD_CARD_SS);
+MySD flash;
 MyRTC rtc;
 MySensors sensors;
-MyServo servo(2);
+MyServo servo(6);
 
-bool close = 0;
 
 struct debounce
 {
@@ -40,12 +38,12 @@ void setup()
 	Serial.println(__DATE__);
 	Serial.println(__TIME__);
 
-	servo.init();
 	rtc.init();
-
 	// Year/Month/Day directory with file named after init time.
 	flash.init(rtc.dateString(rtc.getTime()), rtc.timeString(rtc.getTime()));
 	sensors.init(&rtc, &flash);
+	servo.init();
+	
 
 	flightPhase = EEPROM.read(0);
 
@@ -57,7 +55,7 @@ void loop()
 
 	loopTimer = millis();
 	digitalWrite(13, HIGH);
-
+	
 	button.state = digitalRead(BUTTON_PIN);
 	if (button.state != button.lastState)
 	{

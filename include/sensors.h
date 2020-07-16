@@ -16,19 +16,20 @@
 #define PRESSURE_SS_main 25
 #define PRESSURE_SS_sens 39
 
-#define TIME_DEADZONE 1000
+#define SAMPLING_TIME 1000 // Czas próbkowania
 
 class MySensors
 {
 private:
 	unsigned long lastOperation = 0;
 
+	String log = "";
+
 	MySD *flash;
 	MyRTC *rtc;
 
+public:
 	Logger logger;
-
-	String log = "";
 
 	OneWire onewire_main;
 	OneWire onewire_sens;
@@ -40,7 +41,6 @@ private:
 	TruStabilityPressureSensor pressure_main;
 	TruStabilityPressureSensor pressure_sens;
 
-public:
 	MySensors();
 
 	void init(MyRTC *rtc, MySD *flash);

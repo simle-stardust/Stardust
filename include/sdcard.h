@@ -6,15 +6,12 @@
 class MySD
 {
 private:
-	unsigned int chipSelect = 0;
 	Sd2Card card;
 	SdVolume volume;
 	SdFile root;
 	File myFile;
 	String filename;
 public:
-	MySD(int chipSelect);
 	bool init(String dir, String name);
-	bool info();
 	bool writeLine(String line);
 };

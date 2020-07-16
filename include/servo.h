@@ -6,7 +6,7 @@
 #define SERVOMIN  300 // This is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  600 // This is the 'maximum' pulse length count (out of 4096)
 #define SERVO_FREQ 60
-#define TIME_DEADZONE 1000
+#define SAMPLING_TIME 1000
 
 #define ADDRESS 0x40
 

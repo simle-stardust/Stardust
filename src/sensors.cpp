@@ -19,7 +19,7 @@ void MySensors::init(MyRTC *_rtc, MySD *_flash)
 
 void MySensors::tick()
 {
-	if (millis() - lastOperation > TIME_DEADZONE)
+	if (millis() - lastOperation > SAMPLING_TIME)
 	{
 		rtc->getStatus();
 		Serial.print("RTC:		");

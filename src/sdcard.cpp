@@ -1,15 +1,12 @@
 #include "sdcard.h"
 
-MySD::MySD(int _chipSelect)
-{
-	chipSelect = _chipSelect;
-}
+#define SD_CARD_SS 4
 
 bool MySD::init(String dir, String name)
 {
 	SPI.begin();
 	pinMode(SS, OUTPUT);
-	if (!SD.begin(chipSelect))
+	if (!SD.begin(SD_CARD_SS))
 	{
 		Serial.println("initialization failed!");
 		return 0;

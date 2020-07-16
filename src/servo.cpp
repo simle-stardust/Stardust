@@ -42,7 +42,7 @@ bool MyServo::getStatus(uint8_t servo) {
 
 void MyServo::tick() {		
 	if(servo_pointer > servoNumber-1) servo_pointer = 0;
-	if(millis() - lastOperation > TIME_DEADZONE) {
+	if(millis() - lastOperation > SAMPLING_TIME) {
 		reset();
 		if(servos[servo_pointer].desired != servos[servo_pointer].status) {
 			if(servos[servo_pointer].desired == 1) open(servo_pointer + 1);
