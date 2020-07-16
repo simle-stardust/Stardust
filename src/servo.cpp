@@ -19,9 +19,7 @@ void MyServo::init() {
 }
 
 void MyServo::reset() {
-	for (uint8_t servo = 0; servo < servoNumber; servo++) {
-		pwm->setPin(servo, 0);
-	}
+	digitalWrite(SERVO_DC, LOW);
 }
 
 void MyServo::setOpen(uint8_t servo) {
@@ -46,7 +44,6 @@ void MyServo::tick() {
 	if(servo_pointer > servoNumber-1) servo_pointer = 0;
 	if(millis() - lastOperation > TIME_DEADZONE) {
 		reset();
-		digitalWrite(SERVO_DC, LOW);
 		if(servos[servo_pointer].desired != servos[servo_pointer].status) {
 			if(servos[servo_pointer].desired == 1) open(servo_pointer + 1);
 			if(servos[servo_pointer].desired == 0) close(servo_pointer + 1);
@@ -86,3 +83,24 @@ void MyServo::close(uint8_t servo) {
 	Serial.print("Closed ");
 	Serial.println(servo);
 }
+
+void MyServo::openSequence() {
+	// first half moves clockwise, 2nd half moves counter clockwise
+	for(uint8_t i = 1; i < servoNumber; ++i) {
+		this->setOpen(i);
+	}
+	for(uint8_t i = servoNumber; i < servoNumber; ++i) {
+		this->setClosed(i);
+	}
+};
+
+
+void MyServo::closeSequence() {
+	// first half moves counter clockwise, 2nd half moves clockwise
+	for(uint8_t i = 1; i < servoNumber; ++i) {
+		this->setClosed(i);
+	}
+	for(uint8_t i = servoNumber; i < servoNumber; ++i) {
+		this->setOpen(i);
+	}
+};
