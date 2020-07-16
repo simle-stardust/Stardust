@@ -1,4 +1,5 @@
 #pragma once
+#include <Arduino.h>
 #include <SPI.h>
 #include <SD.h>
 
@@ -11,10 +12,9 @@ private:
 	SdFile root;
 	File myFile;
 	String filename;
-	HardwareSerial *mySerial;
 public:
 	MySD(int chipSelect);
-	bool init(String name, HardwareSerial *serial);
-	bool status();
+	bool init(String dir, String name);
+	bool info();
 	bool writeLine(String line);
 };
