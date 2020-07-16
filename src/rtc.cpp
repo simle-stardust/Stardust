@@ -9,8 +9,6 @@ void MyRTC::init()
   RTC->Begin();
 
   RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
-  Serial.println(__DATE__);
-  Serial.println(__TIME__);
   Serial.println(dateString(compiled));
   Serial.println();
 
@@ -124,4 +122,9 @@ RtcDateTime MyRTC::getTime()
 RtcTemperature MyRTC::getTemp()
 {
   return RTC->GetTemperature();
+}
+
+unsigned int MyRTC::getTimestamp() {
+  RtcDateTime dt = RTC->GetDateTime();
+  return (dt.Day() * 24 * 60 * 60) + (dt.Hour() * 60 * 60) + (dt.Minute() * 60) + dt.Second();
 }

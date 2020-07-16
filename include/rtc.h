@@ -18,4 +18,6 @@ public:
 	RtcDateTime getTime();
 
 	RtcTemperature getTemp();
+
+	unsigned int getTimestamp();
 };
