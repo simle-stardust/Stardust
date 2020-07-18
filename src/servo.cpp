@@ -19,21 +19,18 @@ void MyServo::init() {
 }
 
 void MyServo::reset() {
+	for(uint8_t i = 0; i <= servoNumber; ++i) {
+		pwm->setPWM(i, 0, 0);
+	}
 	digitalWrite(SERVO_DC, LOW);
 }
 
 void MyServo::setOpen(uint8_t servo) {
 	servos[servo-1].desired = 1;
-	Serial.print("Set ");
-	Serial.print(servo);
-	Serial.println(" to Open");
 }
 
 void MyServo::setClosed(uint8_t servo) {
 	servos[servo-1].desired = 0;
-	Serial.print("Set ");
-	Serial.print(servo);
-	Serial.println(" to Closed");
 }
 
 bool MyServo::getStatus(uint8_t servo) {
@@ -42,13 +39,12 @@ bool MyServo::getStatus(uint8_t servo) {
 
 void MyServo::tick() {		
 	if(servo_pointer > servoNumber-1) servo_pointer = 0;
-	if(millis() - lastOperation > SAMPLING_TIME) {
+	if(millis() - lastOperation > SERVO_SAMPLING_TIME) {
 		reset();
 		if(servos[servo_pointer].desired != servos[servo_pointer].status) {
-			if(servos[servo_pointer].desired == 1) open(servo_pointer + 1);
-			if(servos[servo_pointer].desired == 0) close(servo_pointer + 1);
+			move(servo_pointer + 1);
 			servo_pointer++;
-		} else {
+		} else if(!ready()) {
 			servo_pointer++;
 			tick();
 		}
@@ -56,51 +52,19 @@ void MyServo::tick() {
 }
 
 bool MyServo::ready() {
-	for(uint8_t i = 0; i < servoNumber; ++i) {
+	for(uint8_t i = 0; i <= servoNumber; ++i) {
 		if(servos[i].desired != servos[i].status) return 0;
 	}
 	return 1;
 }
 
-void MyServo::open(uint8_t servo) {
+void MyServo::move(uint8_t servo) {
 	digitalWrite(SERVO_DC, HIGH);
 	delay(10);
-	pwm->setPWM(servo, 0, SERVOMAX);
-	servos[servo-1].status = 1;
+	pwm->setPWM(servo, 0, servos[servo-1].desired ? SERVOMAX : SERVOMIN);
+	servos[servo-1].status = servos[servo-1].desired;
 	lastOperation = millis();
 	
-	Serial.print("Opened ");
+	Serial.print(servos[servo-1].desired ? "Opened " : "Closed ");
 	Serial.println(servo);
 }
-
-void MyServo::close(uint8_t servo) {
-	digitalWrite(SERVO_DC, HIGH);
-	delay(10);
-	pwm->setPWM(servo, 0, SERVOMIN);
-	servos[servo-1].status = 0;
-	lastOperation = millis();
-
-	Serial.print("Closed ");
-	Serial.println(servo);
-}
-
-void MyServo::openSequence() {
-	// first half moves clockwise, 2nd half moves counter clockwise
-	for(uint8_t i = 1; i < servoNumber; ++i) {
-		this->setOpen(i);
-	}
-	for(uint8_t i = servoNumber; i < servoNumber; ++i) {
-		this->setClosed(i);
-	}
-};
-
-
-void MyServo::closeSequence() {
-	// first half moves counter clockwise, 2nd half moves clockwise
-	for(uint8_t i = 1; i < servoNumber; ++i) {
-		this->setClosed(i);
-	}
-	for(uint8_t i = servoNumber; i < servoNumber; ++i) {
-		this->setOpen(i);
-	}
-};
