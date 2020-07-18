@@ -1,5 +1,5 @@
+#pragma once
 #include <Arduino.h>
-#include "logger.h"
 #include "rtc.h"
 #include "dht22.h"
 #include "ds18b20.h"
@@ -16,34 +16,79 @@
 #define PRESSURE_SS_main 25
 #define PRESSURE_SS_sens 39
 
-#define SAMPLING_TIME 1000 // Czas próbkowania
+struct serial_altitude
+{
+	unsigned long timestamp = 0;
+	bool isValid = 0;
+	uint32_t value = 0;
+	uint32_t average = 0;
+	uint8_t buf[8];
+	size_t ret = 0;
+
+	static const int measurment_num = 30;
+	uint32_t history[measurment_num];
+	uint8_t pointer = 0;
+};
+
+struct MyPressure
+{
+	unsigned long timestamp = 0;
+	bool isValid = 0;
+	float value = 0;
+	float average = 0;
+	static const int measurment_num = 30;
+	float history[measurment_num];
+	uint8_t pointer = 0;
+};
 
 class MySensors
 {
 private:
-	unsigned long lastOperation = 0;
-
-	String log = "";
-
-	MySD *flash;
 	MyRTC *rtc;
-
-public:
-	Logger logger;
 
 	OneWire onewire_main;
 	OneWire onewire_sens;
 
+	// humidity
+
 	MyDHT dht_main;
 	MyDHT dht_sens;
+
+	// temperature
 	MyDS18B20 temp_main;
 	MyDS18B20 temp_sens;
+
+	// pressure
 	TruStabilityPressureSensor pressure_main;
 	TruStabilityPressureSensor pressure_sens;
+	struct MyPressure pressure_1;
+	struct MyPressure pressure_2;
+
+public:
+	// altitude
+	struct serial_altitude altitude;
 
 	MySensors();
 
-	void init(MyRTC *rtc, MySD *flash);
+	void init(MyRTC *rtc);
 
-	void tick();
+	void readSensors();
+
+	RtcDateTime time();
+	String getTime();
+	String getDate();
+	void getAltitude();
+	void getPressure(int sensor);
+	struct MyPressure pressure(int sensor);
+	float temperature(int sensor);
+	float humidity(int sensor);
+
+	float pressureToAltitude(float seaLevel, float atmospheric, float temp);
+
+	// Sensor ID's
+	// 0 - RTC (temperature)
+	// 1 - Pressure sensor on the main board (pres, temp)
+	// 2 - Pressure sensor on the sensor board (pres, temp)
+	// 3 - DHT 22 on the main board (humid, temp)
+	// 4 - DHT 22 on the sensor board (humid, temp)
 };
