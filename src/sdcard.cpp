@@ -33,7 +33,7 @@ bool MySD::writeLine(String line)
 	if (myFile)
 	{
 		// if the file opened okay, write to it:
-		myFile.println(line.c_str());
+		myFile.print(line.c_str());
 		// save the file even if not at the block bound
 		myFile.flush();
 		// close the file:
