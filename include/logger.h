@@ -1,40 +1,25 @@
 #pragma once
 #include <Arduino.h>
 #include "sdcard.h"
+#include "sensors.h"
+
+#define SAMPLING_TIME 1000 // Czas próbkowania
 
 class Logger {
 	private:
+	unsigned long lastOperation = 0;
 	String log = "";
 	MySD *flash;
+	MySensors *sensors;
 	public:
 
-	void init(MySD *_flash) {
-		flash = _flash;
-		flash->writeLine("Date,Time,RTC_Temp,DHT_Humid,DHT_Temp,DS_Temp,Pressure,Temperature");
-	};
-
-	void add(String value) {
-		Serial.print(value);
-		log += value + ",";
-	}
-
-	void add(float value) {
-		Serial.print(value);
-		log += String(value) + ",";
-	}
-
-	void add(int value) {
-		Serial.print(value);
-		log += String(value) + ",";
-	}
-
-	void save() {
-		log += "\n";
-		flash->writeLine(log);
-		log = "";
-	}
-
-	String line() {
-		return log;
-	}
+	void init(MySD *_flash, MySensors *_sensors);
+	void tick(int phase);
+	
+	void add(String value);
+	void add(float value);
+	void add(int value);
+	void add(uint32_t value);
+	void save();
+	String line();
 };
