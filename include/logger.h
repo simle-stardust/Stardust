@@ -21,7 +21,7 @@ public:
 	void add(String value);
 	void add(float value);
 	void add(int value);
-	void add(uint32_t value);
+	void add(int32_t value);
 	void save();
 	String line();
 };
