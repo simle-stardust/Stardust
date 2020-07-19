@@ -144,7 +144,7 @@ void Logger::add(int value)
 	log += String(value) + ",";
 }
 
-void Logger::add(uint32_t value)
+void Logger::add(int32_t value)
 {
 	Serial.print(value);
 	log += String(value) + ",";
