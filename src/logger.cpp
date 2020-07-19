@@ -7,16 +7,12 @@ void Logger::init(MySD *_flash, MySensors *_sensors)
 	//flash->writeLine("Date,Time,RTC_Temp,DHT_Humid,DHT_Temp,DS_Temp,Pressure,Temperature");
 };
 
-void Logger::tick(int phase)
+void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool finished)
 {
 	if (millis() - lastOperation > SAMPLING_TIME)
 	{
 
 		sensors->readSensors();
-
-		Serial.print("Phase:		");
-			this->add(phase);
-			Serial.println();
 
 		Serial.print("RTC:			");
 			this->add(sensors->getDate());
@@ -26,8 +22,20 @@ void Logger::tick(int phase)
 			this->add(sensors->temperature(0));
 			Serial.println(" *C;");
 
+		Serial.print("Phase:		");
+			this->add(phase);
+			Serial.print("	ground: ");
+			this->add(ground);
+			Serial.print("	flight: ");
+			this->add(inFlight);
+			Serial.print("	sampling: ");
+			this->add(sampling);
+			Serial.print("	finished: ");
+			this->add(finished);
+			Serial.println();
+
 		Serial.print("Altitude [GPS]:		");
-		
+
 			struct MyAltitude altitude = sensors->altitude(0);
 
 			this->add(altitude.value);

@@ -34,7 +34,7 @@ void Flight::init()
 
 void Flight::tick()
 {
-	logger.tick(flight.phase); // Poll sensors and save to SD card each sampling period
+	logger.tick(flight.phase, flight.ground, flight.inFlight, flight.sampling, flight.finished); // Poll sensors and save to SD card each sampling period
 
 	switch (flight.phase)
 	{
