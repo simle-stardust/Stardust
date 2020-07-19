@@ -35,10 +35,6 @@ void Flight::init()
 void Flight::tick()
 {
 	static unsigned long wifi_query_tick = 0;
-	static unsigned long status_change_tick = 0;
-	static unsigned long time_since_change = 0;
-	static unsigned long min_duration = 60000;
-
 	static reason_t reason = (reason_t)0;
 
 	if (millis() - lastOperation > SAMPLING_TIME)
@@ -61,8 +57,6 @@ void Flight::tick()
 
 		logger.tick(flight.phase, flight.ground, flight.inFlight, flight.sampling, flight.finished, reason); // Poll sensors and save to SD card each sampling period
 
-		time_since_change = millis() - status_change_tick;
-		
 		switch (flight.phase)
 		{
 		default:
@@ -80,43 +74,33 @@ void Flight::tick()
 				flight.inFlight = false;
 				flight.sampling = false;
 				flight.finished = false;
-
-				min_duration = 60000; // minimal duration of pre-flight is one minute
 			}
 
 			// Check if it's time to switch state
-			if (time_since_change > min_duration)
+			if (sensors.altitude(0).isValid)
 			{
-				if (sensors.altitude(0).isValid)
+				if (sensors.altitude(0).average > 300)
 				{
-					if (sensors.altitude(0).average > 300)
-					{
-						reason = REASON_ALTITUDE;
-						this->nextPhase();
-						status_change_tick = millis();
-					}
-				}
-				else if (sensors.altitude(1).isValid)
-				{
-					if (sensors.altitude(1).average > 1000)
-					{
-						reason = REASON_PRESSURE1;
-						this->nextPhase();
-						status_change_tick = millis();
-					}
-				}
-				else if (sensors.altitude(2).isValid)
-				{
-					if (sensors.altitude(2).average > 1000)
-					{
-						reason = REASON_PRESSURE2;
-						this->nextPhase();
-						status_change_tick = millis();
-					}
+					reason = REASON_ALTITUDE;
+					this->nextPhase();
 				}
 			}
-
-
+			else if (sensors.altitude(1).isValid)
+			{
+				if (sensors.altitude(1).average > 1000)
+				{
+					reason = REASON_PRESSURE1;
+					this->nextPhase();
+				}
+			}
+			else if (sensors.altitude(2).isValid)
+			{
+				if (sensors.altitude(2).average > 1000)
+				{
+					reason = REASON_PRESSURE2;
+					this->nextPhase();
+				}
+			}
 
 			break;
 		case 1: // Flight
@@ -125,38 +109,31 @@ void Flight::tick()
 				Serial.println("In Flight");
 
 				flight.inFlight = true;
-				min_duration = 60000; // minimal duration of flight state is five minutes
 			}
 
 			// Check if it's time to switch state
-			if (time_since_change > min_duration)
+			if (sensors.altitude(0).isValid)
 			{
-				if (sensors.altitude(0).isValid)
+				if (sensors.altitude(0).average > 13000)
 				{
-					if (sensors.altitude(0).average > 13000)
-					{
-						reason = REASON_ALTITUDE;
-						this->nextPhase();
-						status_change_tick = millis();
-					}
+					reason = REASON_ALTITUDE;
+					this->nextPhase();
 				}
-				else if (sensors.altitude(1).isValid)
+			}
+			else if (sensors.altitude(1).isValid)
+			{
+				if (sensors.altitude(1).average > 15000)
 				{
-					if (sensors.altitude(1).average > 15000)
-					{
-						reason = REASON_PRESSURE1;
-						this->nextPhase();
-						status_change_tick = millis();
-					}
+					reason = REASON_PRESSURE1;
+					this->nextPhase();
 				}
-				else if (sensors.altitude(2).isValid)
+			}
+			else if (sensors.altitude(2).isValid)
+			{
+				if (sensors.altitude(2).average > 15000)
 				{
-					if (sensors.altitude(2).average > 15000)
-					{
-						reason = REASON_PRESSURE2;
-						this->nextPhase();
-						status_change_tick = millis();
-					}
+					reason = REASON_PRESSURE2;
+					this->nextPhase();
 				}
 			}
 
@@ -175,40 +152,33 @@ void Flight::tick()
 					
 				}
 				flight.sampling = true;
-				min_duration = 60000; // minimal duration of sampling state is 20 minutes
 			}
 
 			servos.tick();
 
 			// Check if it's time to switch state
-			if (time_since_change > min_duration)
+			if (sensors.altitude(0).isValid)
 			{
-				if (sensors.altitude(0).isValid)
+				if (sensors.altitude(0).average < 12000)
 				{
-					if (sensors.altitude(0).average < 12000)
-					{
-						reason = REASON_ALTITUDE;
-						this->nextPhase();
-						status_change_tick = millis();
-					}
+					reason = REASON_ALTITUDE;
+					this->nextPhase();
 				}
-				else if (sensors.altitude(1).isValid)
+			}
+			else if (sensors.altitude(1).isValid)
+			{
+				if (sensors.altitude(1).average < 10000)
 				{
-					if (sensors.altitude(1).average < 10000)
-					{
-						reason = REASON_PRESSURE1;
-						this->nextPhase();
-						status_change_tick = millis();
-					}
+					reason = REASON_PRESSURE1;
+					this->nextPhase();
 				}
-				else if (sensors.altitude(2).isValid)
+			}
+			else if (sensors.altitude(2).isValid)
+			{
+				if (sensors.altitude(2).average < 10000)
 				{
-					if (sensors.altitude(2).average < 10000)
-					{
-						reason = REASON_PRESSURE2;
-						this->nextPhase();
-						status_change_tick = millis();
-					}
+					reason = REASON_PRESSURE2;
+					this->nextPhase();
 				}
 			}
 
@@ -229,40 +199,33 @@ void Flight::tick()
 				}
 				Serial.println(" to Closed");
 				flight.sampling = false;
-				min_duration = 60000; // minimal duration of post-sampling state is one minute
 			}
 
 			servos.tick();
 
 			// Check if it's time to switch state
-			if (time_since_change > min_duration)
+			if (sensors.altitude(0).isValid)
 			{
-				if (sensors.altitude(0).isValid)
+				if (sensors.altitude(0).average < 1000)
 				{
-					if (sensors.altitude(0).average < 1000)
-					{
-						reason = REASON_ALTITUDE;
-						this->nextPhase();
-						status_change_tick = millis();
-					}
+					reason = REASON_ALTITUDE;
+					this->nextPhase();
 				}
-				else if (sensors.altitude(1).isValid)
+			}
+			else if (sensors.altitude(1).isValid)
+			{
+				if (sensors.altitude(1).average < 1000)
 				{
-					if (sensors.altitude(1).average < 1000)
-					{
-						reason = REASON_PRESSURE1;
-						this->nextPhase();
-						status_change_tick = millis();
-					}
+					reason = REASON_PRESSURE1;
+					this->nextPhase();
 				}
-				else if (sensors.altitude(2).isValid)
+			}
+			else if (sensors.altitude(2).isValid)
+			{
+				if (sensors.altitude(2).average < 1000)
 				{
-					if (sensors.altitude(2).average < 1000)
-					{
-						reason = REASON_PRESSURE2;
-						this->nextPhase();
-						status_change_tick = millis();
-					}
+					reason = REASON_PRESSURE2;
+					this->nextPhase();
 				}
 			}
 
@@ -284,9 +247,23 @@ void Flight::tick()
 
 void Flight::nextPhase()
 {
-	flight.phase++;
-	Serial.print("\n Advancing to Phase: ");
-	Serial.println(flight.phase);
+	static unsigned long status_change_tick = 0;
+	static unsigned long time_since_change = 0;
+	static unsigned long min_duration = 60000;
+
+	time_since_change = millis() - status_change_tick;
+
+	if (time_since_change > min_duration)
+	{
+		status_change_tick = millis();
+		flight.phase++;
+		Serial.print("\n Advancing to Phase: ");
+		Serial.println(flight.phase);
+	}
+	else
+	{
+		Serial.println("TooSoon");
+	}
 }
 
 void Flight::prevPhase()
