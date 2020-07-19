@@ -60,9 +60,6 @@ void Flight::tick()
 		}
 
 		logger.tick(flight.phase, flight.ground, flight.inFlight, flight.sampling, flight.finished, reason); // Poll sensors and save to SD card each sampling period
-		
-		Serial.print(" PHASE: ");
-		Serial.println(flight.phase);
 
 		time_since_change = millis() - status_change_tick;
 		
@@ -128,7 +125,7 @@ void Flight::tick()
 				Serial.println("In Flight");
 
 				flight.inFlight = true;
-				min_duration = 300000; // minimal duration of flight state is five minutes
+				min_duration = 60000; // minimal duration of flight state is five minutes
 			}
 
 			// Check if it's time to switch state
@@ -178,7 +175,7 @@ void Flight::tick()
 					
 				}
 				flight.sampling = true;
-				min_duration = 1200000; // minimal duration of sampling state is 20 minutes
+				min_duration = 60000; // minimal duration of sampling state is 20 minutes
 			}
 
 			servos.tick();
