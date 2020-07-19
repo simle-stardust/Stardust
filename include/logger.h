@@ -5,11 +5,8 @@
 
 #define SAMPLING_TIME 1000 // Czas próbkowania
 
-
-class Logger
-{
-private:
-	unsigned long lastOperation = 0;
+class Logger {
+	private:
 	String log = "";
 	MySD *flash;
 	MySensors *sensors;

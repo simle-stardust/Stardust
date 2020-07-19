@@ -32,7 +32,10 @@ private:
 	MyServo servos;
 	Logger logger;
 
+	unsigned long lastOperation = 0;
 	unsigned long lastPhaseChange = 0;
+
+	uint16_t MainGondolaFlags = 0;
 
 public:
 	Flight();
@@ -44,5 +47,9 @@ public:
 	void readFlightFromEEPROM();
 	void saveFlightToEEPROM();
 
+	void getStatus();
+	bool getGPSStatus();
+	uint8_t getStardustFlightState();
 	bool getLiftoffStatus();
+	void sendStatusToWiFi();
 };
