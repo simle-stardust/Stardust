@@ -57,6 +57,9 @@ void Flight::tick()
 		}
 
 		logger.tick(flight.phase, flight.ground, flight.inFlight, flight.sampling, flight.finished, reason); // Poll sensors and save to SD card each sampling period
+		
+		Serial.print(" PHASE: ");
+		Serial.println(flight.phase);
 
 		switch (flight.phase)
 		{
@@ -77,7 +80,7 @@ void Flight::tick()
 				flight.finished = false;
 			}
 
-			// Check if it's time to switch state
+			//Check if it's time to switch state
 			if (sensors.altitude(0).isValid)
 			{
 				if (sensors.altitude(0).average > 300)
@@ -146,15 +149,13 @@ void Flight::tick()
 				Serial.println(" Sampling ON");
 
 				Serial.println("Open sequence start");
-				Serial.print("Set ");
+				
 				for (uint8_t i = 1; i <= SERVO_NUM; ++i)
 				{
 					servos.setOpen(i);
 
-					Serial.print(i);
-					Serial.print(", ");
+					
 				}
-				Serial.println(" to Open");
 				flight.sampling = true;
 			}
 
