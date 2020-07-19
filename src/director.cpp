@@ -36,29 +36,27 @@ void Flight::tick()
 {
 	static unsigned long wifi_query_tick = 0;
 
+	static reason_t reason = (reason_t)0;
+
 	if (millis() - lastOperation > SAMPLING_TIME)
 	{
-		logger.tick(flight.phase, flight.ground, flight.inFlight, flight.sampling, flight.finished); // Poll sensors and save to SD card each sampling period
-
 		if (millis() - wifi_query_tick > 10000)
 		{
-			// ask wifi for state every 10s
-			this->getStatus();
-			// send current state to wifi
-			this->sendStatusToWiFi();
-
-			if (this->getLoRaStatus())
+			if (sensors.getLoRaStatus())
 			{
 				// if LoRa connection is valid, allow to overwrite current status
-				int LoRaPhase = (int)this->getStardustFlightStatus();
-				if ((LoRaPhase > flight.phase) && (flight.phase >= 0) && (flight.phase <= 4))
+				int LoRaPhase = (int)sensors.getStardustFlightStatus();
+				if ((LoRaPhase > flight.phase) && (LoRaPhase >= 0) && (LoRaPhase <= 4))
 				{
 					flight.phase = LoRaPhase;
+					reason = REASON_LORA;
 				}
 			}
 
 			wifi_query_tick = millis();
 		}
+
+		logger.tick(flight.phase, flight.ground, flight.inFlight, flight.sampling, flight.finished, reason); // Poll sensors and save to SD card each sampling period
 
 		switch (flight.phase)
 		{
@@ -80,11 +78,29 @@ void Flight::tick()
 			}
 
 			// Check if it's time to switch state
-			if ((sensors.altitude(0).average > 300 && sensors.altitude(0).isValid) 
-				|| (sensors.altitude(1).average > 1000 && sensors.altitude(1).isValid)
-				|| (sensors.altitude(2).average > 1000 && sensors.altitude(2).isValid))
+			if (sensors.altitude(0).isValid)
 			{
-				this->nextPhase();
+				if (sensors.altitude(0).average > 300)
+				{
+					reason = REASON_ALTITUDE;
+					this->nextPhase();
+				}
+			}
+			else if (sensors.altitude(1).isValid)
+			{
+				if (sensors.altitude(1).average > 1000)
+				{
+					reason = REASON_PRESSURE1;
+					this->nextPhase();
+				}
+			}
+			else if (sensors.altitude(2).isValid)
+			{
+				if (sensors.altitude(2).average > 1000)
+				{
+					reason = REASON_PRESSURE2;
+					this->nextPhase();
+				}
 			}
 
 
@@ -96,13 +112,31 @@ void Flight::tick()
 
 				flight.inFlight = true;
 			}
-			
+
 			// Check if it's time to switch state
-			if ((sensors.altitude(0).average > 13000 && sensors.altitude(0).isValid) 
-				|| (sensors.altitude(1).average > 15000 && sensors.altitude(1).isValid)
-				|| (sensors.altitude(2).average > 15000 && sensors.altitude(2).isValid))
+			if (sensors.altitude(0).isValid)
 			{
-				this->nextPhase();
+				if (sensors.altitude(0).average > 13000)
+				{
+					reason = REASON_ALTITUDE;
+					this->nextPhase();
+				}
+			}
+			else if (sensors.altitude(1).isValid)
+			{
+				if (sensors.altitude(1).average > 15000)
+				{
+					reason = REASON_PRESSURE1;
+					this->nextPhase();
+				}
+			}
+			else if (sensors.altitude(2).isValid)
+			{
+				if (sensors.altitude(2).average > 15000)
+				{
+					reason = REASON_PRESSURE2;
+					this->nextPhase();
+				}
 			}
 
 			break;
@@ -127,13 +161,31 @@ void Flight::tick()
 			servos.tick();
 
 			// Check if it's time to switch state
-			if ((sensors.altitude(0).average < 12000 && sensors.altitude(0).isValid) 
-				|| (sensors.altitude(1).average < 10000 && sensors.altitude(1).isValid)
-				|| (sensors.altitude(2).average < 10000 && sensors.altitude(2).isValid))
-				// and add condition for minimal state duration
+			if (sensors.altitude(0).isValid)
 			{
-				this->nextPhase();
+				if (sensors.altitude(0).average < 12000)
+				{
+					reason = REASON_ALTITUDE;
+					this->nextPhase();
+				}
 			}
+			else if (sensors.altitude(1).isValid)
+			{
+				if (sensors.altitude(1).average < 10000)
+				{
+					reason = REASON_PRESSURE1;
+					this->nextPhase();
+				}
+			}
+			else if (sensors.altitude(2).isValid)
+			{
+				if (sensors.altitude(2).average < 10000)
+				{
+					reason = REASON_PRESSURE2;
+					this->nextPhase();
+				}
+			}
+
 
 			break;
 		case 3:							 // Sampling OFF
@@ -156,11 +208,29 @@ void Flight::tick()
 			servos.tick();
 
 			// Check if it's time to switch state
-			if ((sensors.altitude(0).average < 12000 && sensors.altitude(0).isValid) 
-				|| (sensors.altitude(1).average < 10000 && sensors.altitude(1).isValid)
-				|| (sensors.altitude(2).average < 10000 && sensors.altitude(2).isValid))
+			if (sensors.altitude(0).isValid)
 			{
-				this->nextPhase();
+				if (sensors.altitude(0).average < 1000)
+				{
+					reason = REASON_ALTITUDE;
+					this->nextPhase();
+				}
+			}
+			else if (sensors.altitude(1).isValid)
+			{
+				if (sensors.altitude(1).average < 1000)
+				{
+					reason = REASON_PRESSURE1;
+					this->nextPhase();
+				}
+			}
+			else if (sensors.altitude(2).isValid)
+			{
+				if (sensors.altitude(2).average < 1000)
+				{
+					reason = REASON_PRESSURE2;
+					this->nextPhase();
+				}
 			}
 
 			break;
@@ -214,87 +284,4 @@ void Flight::saveFlightToEEPROM() {
 	EEPROM.update(sizeof(int) + sizeof(bool), flight.inFlight);
 	EEPROM.update(sizeof(int) + sizeof(bool) * 2, flight.sampling);
 	EEPROM.update(sizeof(int) + sizeof(bool) * 3, flight.finished);
-}
-
-void Flight::getStatus() 
-{
-	uint8_t buf[4];
-	size_t ret = 0;
-
-	Serial3.println("@MarcinGetStatus!");
-	ret = Serial3.readBytes(&buf[0], 4);
-	Serial3.flush();
-
-	if (ret == 4 && buf[0] == '@' && buf[3] == '!')
-	{
-		MainGondolaFlags = ((uint16_t)buf[1] << 8) + buf[2];
-	}
-	else 
-	{
-		// set all errors to true
-		MainGondolaFlags = 0xFFFF;
-	}
-}
-
-bool Flight::getGPSStatus()
-{
-	if (MainGondolaFlags == 0xFFFF)
-	{
-		return false;
-	}
-	else 
-	{
-		// check if GPS_ERR is ON in main gondola
-		return (MainGondolaFlags & 0x0800) ? false : true;
-	}
-}
-
-uint8_t Flight::getStardustFlightStatus()
-{
-	if (MainGondolaFlags == 0xFFFF)
-	{
-		return 0xFF;
-	}
-	else 
-	{	// return 3 LSbits from MainGondola flags
-		return (MainGondolaFlags & 0x03);
-	}
-}
-
-bool Flight::getLoRaStatus()
-{
-	if (MainGondolaFlags == 0xFFFF)
-	{
-		return false;
-	}
-	else 
-	{
-		// check if LORA_ERR is ON in main gondola
-		return (MainGondolaFlags & 0x2000) ? false : true;
-	}
-}	
-
-bool Flight::getLiftoffStatus()
-{
-	if (MainGondolaFlags == 0xFFFF)
-	{
-		// flight is on is false in case of WiFi error
-		return false;
-	}
-	else 
-	{
-		// check if FLIGHT_IS_ON is ON in main gondola
-		return (MainGondolaFlags & 0x0040) ? true : false;
-	}
-}
-
-void Flight::sendStatusToWiFi()
-{
-	uint8_t buf[4];
-
-	Serial3.print("@MarcinSetStardust:");
-	Serial3.print(flight.phase);
-	Serial3.println("!");
-	Serial3.readBytes(&buf[0], 10);
-	Serial3.flush();
 }

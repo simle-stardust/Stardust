@@ -35,8 +35,6 @@ private:
 	unsigned long lastOperation = 0;
 	unsigned long lastPhaseChange = 0;
 
-	uint16_t MainGondolaFlags = 0;
-
 public:
 	Flight();
 	void init();
@@ -47,10 +45,4 @@ public:
 	void readFlightFromEEPROM();
 	void saveFlightToEEPROM();
 
-	void getStatus();
-	bool getGPSStatus();
-	uint8_t getStardustFlightStatus();
-	bool getLoRaStatus();
-	bool getLiftoffStatus();
-	void sendStatusToWiFi();
 };
