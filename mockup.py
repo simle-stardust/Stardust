@@ -14,11 +14,11 @@ humidity = 0
 pressure = 0
 lattitude = 0
 longtitude = 0
-altitude = 0
+altitude = 950
 flag_main = 0
 hdop = 10
 
-ser = serial.Serial(port="/dev/ttyUSB0", baudrate=115200)  # open serial port
+ser = serial.Serial(port="/dev/ttyUSB1", baudrate=115200)  # open serial port
 
 while True:
     time.sleep(5)
