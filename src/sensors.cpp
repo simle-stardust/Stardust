@@ -1,5 +1,7 @@
 #include "sensors.h"
 
+#define DUPA
+
 MySensors::MySensors() : onewire_main(ONE_WIRE_main), onewire_sens(ONE_WIRE_sens), dht_main(DHT22_main), dht_sens(DHT22_sens), pressure_main(PRESSURE_SS_main, 0, 15.0), pressure_sens(PRESSURE_SS_sens, 0, 15.0)
 {
 }
@@ -13,7 +15,7 @@ void MySensors::init(MyRTC *_rtc)
 	pressure_sens.begin();
 }
 
-void MySensors::readSensors()
+void MySensors::readSensors(int status)
 {
 	rtc->getStatus();
 
@@ -22,7 +24,7 @@ void MySensors::readSensors()
 	getPressure(2);
 
 	// Altitude
-	getAltitude();
+	getAltitude(status);
 }
 
 RtcDateTime MySensors::time()
@@ -40,7 +42,7 @@ String MySensors::getTime()
 	return rtc->timeString(rtc->getTime());
 }
 
-void MySensors::getAltitude()
+void MySensors::getAltitude(int status)
 {
 	// Pressure Based [1, 2]
 
@@ -54,45 +56,86 @@ void MySensors::getAltitude()
 	altitude_2.isValid = pressure_2.isValid;
 	altitude_2.timestamp = pressure_2.timestamp;
 
-	// GPS Based [0]
-	Serial3.println("@MarcinGetWysokosc!");
-	altitude_0.ret = Serial3.readBytes(&altitude_0.buf[0], 6);
-	Serial3.flush();
-
-	if (altitude_0.ret == 6 && altitude_0.buf[0] == '@' && altitude_0.buf[5] == '!')
+	if ((status < 0) || (status > 4))
 	{
-		int32_t new_altitude = (int32_t)(((uint32_t)altitude_0.buf[1] << 24) + ((uint32_t)altitude_0.buf[2] << 16) + ((uint32_t)altitude_0.buf[3] << 8) + (altitude_0.buf[4]));
-		// Update value and array, only if new, and within bounds
-		if (new_altitude != altitude_0.value && new_altitude >= 0 && new_altitude < 40000)
+		status = 255;
+	}
+
+	// GPS Based [0]
+
+	if (millis() - altitude_0.timestamp >= 5000 )
+	{
+		Serial3.print("@MarcinGetWysokosc:");
+		Serial3.print(status);
+		Serial3.println("!");
+		altitude_0.ret = Serial3.readBytes(&altitude_0.buf[0], 8);
+		Serial3.flush();
+
+		#ifdef DUPA
+			Serial.print("RECEIVED ");
+			Serial.print(altitude_0.ret);
+			Serial.print(" BYTES FROM WIFI: ");
+			Serial.print(altitude_0.buf[0]);
+			Serial.print(" ");
+			Serial.print(altitude_0.buf[1]);
+			Serial.print(" ");
+			Serial.print(altitude_0.buf[2]);
+			Serial.print(" ");
+			Serial.print(altitude_0.buf[3]);
+			Serial.print(" ");
+			Serial.print(altitude_0.buf[4]);
+			Serial.print(" ");
+			Serial.print(altitude_0.buf[5]);
+			Serial.print(" ");
+			Serial.print(altitude_0.buf[6]);
+			Serial.print(" ");
+			Serial.print(altitude_0.buf[7]);
+			Serial.println();
+		#endif
+
+		if (altitude_0.ret == 8 && altitude_0.buf[0] == '@' && altitude_0.buf[7] == '!')
 		{
-			altitude_0.value = new_altitude;
-
-			// add value to array in order to calculate avg. alt.
-			altitude_0.history[altitude_0.pointer] = altitude_0.value;
-			altitude_0.pointer++;
-			if (altitude_0.pointer > (altitude_0.measurment_num - 1) || altitude_0.pointer < 0)
+			int32_t new_altitude = (int32_t)(((uint32_t)altitude_0.buf[1] << 24) + ((uint32_t)altitude_0.buf[2] << 16) + ((uint32_t)altitude_0.buf[3] << 8) + (altitude_0.buf[4]));
+			
+			MainGondolaFlags = ((uint16_t)altitude_0.buf[5] << 8) + altitude_0.buf[6];
+			
+			// Update value and array, only if new, and within bounds
+			if (new_altitude != altitude_0.value && new_altitude >= 0 && new_altitude < 40000)
 			{
-				altitude_0.pointer = 0;
-			}
+				altitude_0.value = new_altitude;
 
-			altitude_0.average = 0;
-			int avg_num = 0;
-			for (uint8_t i = 0; i < altitude_0.measurment_num; i++)
-			{
-				if (altitude_0.history[i] != 0)
+				// add value to array in order to calculate avg. alt.
+				altitude_0.history[altitude_0.pointer] = altitude_0.value;
+				altitude_0.pointer++;
+				if (altitude_0.pointer > (altitude_0.measurment_num - 1) || altitude_0.pointer < 0)
 				{
-					altitude_0.average += altitude_0.history[i];
-					avg_num++;
+					altitude_0.pointer = 0;
 				}
+
+				altitude_0.average = 0;
+				int avg_num = 0;
+				for (uint8_t i = 0; i < altitude_0.measurment_num; i++)
+				{
+					if (altitude_0.history[i] != 0)
+					{
+						altitude_0.average += altitude_0.history[i];
+						avg_num++;
+					}
+				}
+				altitude_0.average /= avg_num;
+
+				if (millis() - altitude_0.timestamp < 60000 && altitude_0.timestamp != 0 && avg_num > 5)
+					altitude_0.isValid = true;
+
+				altitude_0.ret = 0;
+				altitude_0.timestamp = millis();
 			}
-			altitude_0.average /= avg_num;
-
-			if (millis() - altitude_0.timestamp < 60000 && altitude_0.timestamp != 0 && avg_num > 5)
-				altitude_0.isValid = true;
-
-			altitude_0.ret = 0;
-			altitude_0.timestamp = millis();
 		}
+		else 
+		{
+			MainGondolaFlags = 0xFFFF;
+		}
+
 	}
 
 	if (millis() - altitude_0.timestamp > 60000)
@@ -240,4 +283,56 @@ float MySensors::pressureToAltitude(float seaLevel = 1013.0, float atmospheric =
 	return (((float)pow((seaLevel / atmospheric), 0.190223F) - 1.0F) *
 			(temp + 273.15F)) /
 		   0.0065F;
+}
+
+bool MySensors::getGPSStatus()
+{
+	if (MainGondolaFlags == 0xFFFF)
+	{
+		return false;
+	}
+	else 
+	{
+		// check if GPS_ERR is ON in main gondola
+		return (MainGondolaFlags & 0x0800) ? false : true;
+	}
+}
+
+uint8_t MySensors::getStardustFlightStatus()
+{
+	if (MainGondolaFlags == 0xFFFF)
+	{
+		return 0xFF;
+	}
+	else 
+	{	// return 3 LSbits from MainGondola flags
+		return (MainGondolaFlags & 0x03);
+	}
+}
+
+bool MySensors::getLoRaStatus()
+{
+	if (MainGondolaFlags == 0xFFFF)
+	{
+		return false;
+	}
+	else 
+	{
+		// check if LORA_ERR is ON in main gondola
+		return (MainGondolaFlags & 0x2000) ? false : true;
+	}
+}	
+
+bool MySensors::getLiftoffStatus()
+{
+	if (MainGondolaFlags == 0xFFFF)
+	{
+		// flight is on is false in case of WiFi error
+		return false;
+	}
+	else 
+	{
+		// check if FLIGHT_IS_ON is ON in main gondola
+		return (MainGondolaFlags & 0x0040) ? true : false;
+	}
 }

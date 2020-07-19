@@ -24,7 +24,7 @@ struct MyAltitude
 	bool isValid = 0;
 	int32_t value = 0;
 	int32_t average = 0;
-	uint8_t buf[8];
+	uint8_t buf[10];
 	size_t ret = 0;
 
 	static const int measurment_num = 30;
@@ -71,6 +71,8 @@ private:
 	struct MyAltitude altitude_1;
 	struct MyAltitude altitude_2;
 
+	uint16_t MainGondolaFlags = 0;
+
 public:
 	
 
@@ -78,12 +80,12 @@ public:
 
 	void init(MyRTC *rtc);
 
-	void readSensors();
+	void readSensors(int status);
 
 	RtcDateTime time();
 	String getTime();
 	String getDate();
-	void getAltitude();
+	void getAltitude(int status);
 	void getPressure(int sensor);
 
 	struct MyAltitude altitude(int sensor);
@@ -92,6 +94,11 @@ public:
 	float humidity(int sensor);
 
 	float pressureToAltitude(float seaLevel, float atmospheric, float temp);
+
+	bool getGPSStatus();
+	uint8_t getStardustFlightStatus();
+	bool getLoRaStatus();
+	bool getLiftoffStatus();
 
 	// Sensor ID's
 	// 0 - RTC (temperature)

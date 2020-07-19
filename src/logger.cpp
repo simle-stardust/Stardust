@@ -7,9 +7,9 @@ void Logger::init(MySD *_flash, MySensors *_sensors)
 	//flash->writeLine("Date,Time,RTC_Temp,DHT_Humid,DHT_Temp,DS_Temp,Pressure,Temperature");
 };
 
-void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool finished)
+void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool finished, reason_t reason)
 {
-	sensors->readSensors();
+	sensors->readSensors(phase);
 
 	Serial.print("RTC:			");
 		this->add(sensors->getDate());
@@ -98,6 +98,26 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 		this->add(sensors->temperature(4));
 		Serial.println(" *C;");
 
+	Serial.print("GPS status from main:		");
+		this->add(sensors->getGPSStatus());
+		Serial.println();
+	
+	Serial.print("Stardust status from main:   ");
+		this->add(sensors->getStardustFlightStatus());
+		Serial.println();
+
+	Serial.print("LoRa status from main:    ");
+		this->add(sensors->getLoRaStatus());
+		Serial.println();
+	
+	Serial.print("Liftoff status from main:  ");
+		this->add(sensors->getLiftoffStatus());
+		Serial.println();
+
+	Serial.print("Reason of change:   ");
+		this->add(reason);
+		Serial.println();
+
 	// // TODO: Why you no work ? :(
 	// temp_main.update();
 	// for (int i = 0; i < temp_main.getNumberOfDevices(); i++)
@@ -143,6 +163,33 @@ void Logger::add(int32_t value)
 {
 	Serial.print(value);
 	log += String(value) + ",";
+}
+
+void Logger::add(reason_t value)
+{
+	switch (value)
+	{
+		case REASON_PRESSURE1:
+			Serial.print("PRESSURE1");
+			log += "PRESSURE1,";
+			break;
+		case REASON_PRESSURE2:
+			Serial.print("PRESSURE2");
+			log += "PRESSURE2,";
+			break;
+		case REASON_ALTITUDE:
+			Serial.print("ALTITUDE");
+			log += "ALTITUDE,";
+			break;
+		case REASON_LORA:
+			Serial.print("LORA");
+			log += "LORA,";
+			break;
+		default:
+			Serial.print("UNKNOWN");
+			log += "UNKNOWN,";
+			break;
+	}
 }
 
 void Logger::save()

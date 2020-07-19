@@ -21,7 +21,7 @@ void setup()
 	pinMode(BUTTON_PIN, INPUT);
 
 	Serial3.begin(115200);
-	Serial3.setTimeout(500);
+	Serial3.setTimeout(1000);
 
 	Serial.begin(115200);
 	Serial.print("compiled: ");
