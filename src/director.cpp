@@ -50,7 +50,7 @@ void Flight::tick()
 			if (this->getLoRaStatus())
 			{
 				// if LoRa connection is valid, allow to overwrite current status
-				int LoRaPhase = (int)this->getStardustFlightState();
+				int LoRaPhase = (int)this->getStardustFlightStatus();
 				if ((LoRaPhase > flight.phase) && (flight.phase >= 0) && (flight.phase <= 4))
 				{
 					flight.phase = LoRaPhase;
@@ -282,11 +282,10 @@ bool Flight::getLiftoffStatus()
 void Flight::sendStatusToWiFi()
 {
 	uint8_t buf[4];
-	size_t ret = 0;
 
 	Serial3.print("@MarcinSetStatus:");
 	Serial3.print(flight.phase);
 	Serial3.println("!");
-	ret = Serial3.readBytes(&buf[0], 10);
+	Serial3.readBytes(&buf[0], 10);
 	Serial3.flush();
 }

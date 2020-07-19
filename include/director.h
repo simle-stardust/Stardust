@@ -49,7 +49,8 @@ public:
 
 	void getStatus();
 	bool getGPSStatus();
-	uint8_t getStardustFlightState();
+	uint8_t getStardustFlightStatus();
+	bool getLoRaStatus();
 	bool getLiftoffStatus();
 	void sendStatusToWiFi();
 };
