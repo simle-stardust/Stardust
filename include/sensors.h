@@ -13,20 +13,22 @@
 #define ONE_WIRE_mech 31
 #define ONE_WIRE_sens 37
 
+#define LIFTOFF_PRESSURE 1014.0f
+
 #define PRESSURE_SS_main 25
 #define PRESSURE_SS_sens 39
 
-struct serial_altitude
+struct MyAltitude
 {
 	unsigned long timestamp = 0;
 	bool isValid = 0;
-	uint32_t value = 0;
-	uint32_t average = 0;
+	int32_t value = 0;
+	int32_t average = 0;
 	uint8_t buf[8];
 	size_t ret = 0;
 
 	static const int measurment_num = 30;
-	uint32_t history[measurment_num];
+	int32_t history[measurment_num];
 	uint8_t pointer = 0;
 };
 
@@ -64,9 +66,13 @@ private:
 	struct MyPressure pressure_1;
 	struct MyPressure pressure_2;
 
-public:
 	// altitude
-	struct serial_altitude altitude;
+	struct MyAltitude altitude_0;
+	struct MyAltitude altitude_1;
+	struct MyAltitude altitude_2;
+
+public:
+	
 
 	MySensors();
 
@@ -79,6 +85,8 @@ public:
 	String getDate();
 	void getAltitude();
 	void getPressure(int sensor);
+
+	struct MyAltitude altitude(int sensor);
 	struct MyPressure pressure(int sensor);
 	float temperature(int sensor);
 	float humidity(int sensor);

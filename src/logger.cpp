@@ -7,16 +7,12 @@ void Logger::init(MySD *_flash, MySensors *_sensors)
 	//flash->writeLine("Date,Time,RTC_Temp,DHT_Humid,DHT_Temp,DS_Temp,Pressure,Temperature");
 };
 
-void Logger::tick(int phase)
+void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool finished)
 {
 	if (millis() - lastOperation > SAMPLING_TIME)
 	{
 
 		sensors->readSensors();
-
-		Serial.print("Phase:		");
-			this->add(phase);
-			Serial.println();
 
 		Serial.print("RTC:			");
 			this->add(sensors->getDate());
@@ -26,8 +22,22 @@ void Logger::tick(int phase)
 			this->add(sensors->temperature(0));
 			Serial.println(" *C;");
 
+		Serial.print("Phase:		");
+			this->add(phase);
+			Serial.print("	ground: ");
+			this->add(ground);
+			Serial.print("	flight: ");
+			this->add(inFlight);
+			Serial.print("	sampling: ");
+			this->add(sampling);
+			Serial.print("	finished: ");
+			this->add(finished);
+			Serial.println();
+
 		Serial.print("Altitude [GPS]:		");
-			struct serial_altitude altitude = sensors->altitude;
+
+			struct MyAltitude altitude = sensors->altitude(0);
+
 			this->add(altitude.value);
 			Serial.print("m		[avg:");
 			this->add(altitude.average);
@@ -36,25 +46,29 @@ void Logger::tick(int phase)
 			Serial.println(";");
 
 		Serial.print("Altitude [Pressure#1]:	");
-			struct MyPressure pressure = sensors->pressure(1);
-			this->add(sensors->pressureToAltitude(1015.0, pressure.value, sensors->temperature(1)));
+
+			altitude = sensors->altitude(1);
+
+			this->add(altitude.value);
 			Serial.print("m		[avg:");
-			this->add(sensors->pressureToAltitude(1015.0, pressure.average, sensors->temperature(1)));
+			this->add(altitude.average);
 			Serial.print("m]				true:");
-			this->add(pressure.isValid);
+			this->add(altitude.isValid);
 			Serial.println(";");
 
 		Serial.print("Altitude [Pressure#2]:	");
-			pressure = sensors->pressure(2);
-			this->add(sensors->pressureToAltitude(1015.0, pressure.value, sensors->temperature(2)));
+
+			altitude = sensors->altitude(2);
+
+			this->add(altitude.value);
 			Serial.print("m		[avg:");
-			this->add(sensors->pressureToAltitude(1015.0, pressure.average, sensors->temperature(2)));
+			this->add(altitude.average);
 			Serial.print("m]				true:");
-			this->add(pressure.isValid);
+			this->add(altitude.isValid);
 			Serial.println(";");
 
 		Serial.print("Pressure [main]:	");
-			pressure = sensors->pressure(1);
+			struct MyPressure pressure = sensors->pressure(1);
 			this->add(pressure.value);
 			Serial.print("hpa	[avg:");
 			this->add(pressure.average);
