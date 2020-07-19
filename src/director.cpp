@@ -283,7 +283,7 @@ void Flight::sendStatusToWiFi()
 {
 	uint8_t buf[4];
 
-	Serial3.print("@MarcinSetStatus:");
+	Serial3.print("@MarcinSetStardust:");
 	Serial3.print(flight.phase);
 	Serial3.println("!");
 	Serial3.readBytes(&buf[0], 10);
