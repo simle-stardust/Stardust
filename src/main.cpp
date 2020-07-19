@@ -60,14 +60,9 @@ void loop()
 				flight.setPhase(0);
 			}
 
-			if (button.time > 500 && button.time <1000)
+			if (button.time > 500 && button.time <5000)
 			{
 				flight.nextPhase();
-			}
-
-			if (button.time > 1000 && button.time < 2000)
-			{
-				flight.prevPhase();
 			}
 		}
 		button.lastState = button.state;
