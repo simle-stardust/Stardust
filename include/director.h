@@ -43,7 +43,7 @@ public:
 	void tick();
 	void nextPhase();
 	void prevPhase();
-	void setPhase();
+	void setPhase(int Phase);
 	void readFlightFromEEPROM();
 	void saveFlightToEEPROM();
 

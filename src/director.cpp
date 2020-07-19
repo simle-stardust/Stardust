@@ -173,6 +173,8 @@ void Flight::tick()
 		}
 
 		this->saveFlightToEEPROM();
+
+		lastOperation = millis();
 	}
 }
 
@@ -186,6 +188,13 @@ void Flight::nextPhase()
 void Flight::prevPhase()
 {
 	flight.phase--;
+	Serial.print("\n Advancing to Phase: ");
+	Serial.println(flight.phase);
+}
+
+void Flight::setPhase(int phase)
+{
+	flight.phase = phase;
 	Serial.print("\n Advancing to Phase: ");
 	Serial.println(flight.phase);
 }
