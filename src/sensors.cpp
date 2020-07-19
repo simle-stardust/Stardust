@@ -42,50 +42,63 @@ String MySensors::getTime()
 
 void MySensors::getAltitude()
 {
+	// Pressure Based [1, 2]
+
+	altitude_1.value = pressureToAltitude(LIFTOFF_PRESSURE, pressure_1.value, temperature(1));
+	altitude_1.average = pressureToAltitude(LIFTOFF_PRESSURE, pressure_1.average, temperature(1));
+	altitude_1.isValid = pressure_1.isValid;
+	altitude_1.timestamp = pressure_1.timestamp;
+
+	altitude_2.value = pressureToAltitude(LIFTOFF_PRESSURE, pressure_2.value, temperature(2));
+	altitude_2.average = pressureToAltitude(LIFTOFF_PRESSURE, pressure_2.average, temperature(2));
+	altitude_2.isValid = pressure_2.isValid;
+	altitude_2.timestamp = pressure_2.timestamp;
+
+	// GPS Based [0]
 	Serial3.println("@MarcinGetWysokosc!");
-	altitude.ret = Serial3.readBytes(&altitude.buf[0], 6);
+	altitude_0.ret = Serial3.readBytes(&altitude_0.buf[0], 6);
 	Serial3.flush();
 
-	if (altitude.ret == 6 && altitude.buf[0] == '@' && altitude.buf[5] == '!')
+	if (altitude_0.ret == 6 && altitude_0.buf[0] == '@' && altitude_0.buf[5] == '!')
 	{
-		uint32_t new_altitude = (uint32_t)(((uint32_t)altitude.buf[1] << 24) + ((uint32_t)altitude.buf[2] << 16) + ((uint32_t)altitude.buf[3] << 8) + (altitude.buf[4]));
+		uint32_t new_altitude = (uint32_t)(((uint32_t)altitude_0.buf[1] << 24) + ((uint32_t)altitude_0.buf[2] << 16) + ((uint32_t)altitude_0.buf[3] << 8) + (altitude_0.buf[4]));
 		// Update value and array, only if new, and within bounds
-		if (new_altitude != altitude.value && new_altitude >= 0 && new_altitude < 40000)
+		if (new_altitude != altitude_0.value && new_altitude >= 0 && new_altitude < 40000)
 		{
-			altitude.value = new_altitude;
+			altitude_0.value = new_altitude;
 
 			// add value to array in order to calculate avg. alt.
-			altitude.history[altitude.pointer] = altitude.value;
-			altitude.pointer++;
-			if (altitude.pointer > (altitude.measurment_num - 1) || altitude.pointer < 0)
+			altitude_0.history[altitude_0.pointer] = altitude_0.value;
+			altitude_0.pointer++;
+			if (altitude_0.pointer > (altitude_0.measurment_num - 1) || altitude_0.pointer < 0)
 			{
-				altitude.pointer = 0;
+				altitude_0.pointer = 0;
 			}
 
-			altitude.average = 0;
+			altitude_0.average = 0;
 			int avg_num = 0;
-			for (uint8_t i = 0; i < altitude.measurment_num; i++)
+			for (uint8_t i = 0; i < altitude_0.measurment_num; i++)
 			{
-				if (altitude.history[i] != 0)
+				if (altitude_0.history[i] != 0)
 				{
-					altitude.average += altitude.history[i];
+					altitude_0.average += altitude_0.history[i];
 					avg_num++;
 				}
 			}
-			altitude.average /= avg_num;
+			altitude_0.average /= avg_num;
 
-			if (millis() - altitude.timestamp < 60000 && altitude.timestamp != 0 && avg_num > 5)
-				altitude.isValid = true;
+			if (millis() - altitude_0.timestamp < 60000 && altitude_0.timestamp != 0 && avg_num > 5)
+				altitude_0.isValid = true;
 
-			altitude.ret = 0;
-			altitude.timestamp = millis();
+			altitude_0.ret = 0;
+			altitude_0.timestamp = millis();
 		}
 	}
 
-	if (millis() - altitude.timestamp > 60000)
+	if (millis() - altitude_0.timestamp > 60000)
 	{
 		// altitude is stale when time since last unique acqusition is more than 60 * 1000 milliseconds.
-		altitude.isValid = false;
+		altitude_0.isValid = false;
 	}
 }
 
