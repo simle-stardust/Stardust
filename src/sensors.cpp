@@ -61,7 +61,7 @@ void MySensors::getAltitude()
 
 	if (altitude_0.ret == 6 && altitude_0.buf[0] == '@' && altitude_0.buf[5] == '!')
 	{
-		uint32_t new_altitude = (uint32_t)(((uint32_t)altitude_0.buf[1] << 24) + ((uint32_t)altitude_0.buf[2] << 16) + ((uint32_t)altitude_0.buf[3] << 8) + (altitude_0.buf[4]));
+		int32_t new_altitude = (int32_t)(((uint32_t)altitude_0.buf[1] << 24) + ((uint32_t)altitude_0.buf[2] << 16) + ((uint32_t)altitude_0.buf[3] << 8) + (altitude_0.buf[4]));
 		// Update value and array, only if new, and within bounds
 		if (new_altitude != altitude_0.value && new_altitude >= 0 && new_altitude < 40000)
 		{
@@ -123,7 +123,7 @@ void MySensors::getPressure(int sensor = 0)
 	}
 
 	float new_pressure = pressure_active->pressure() * 68.9476;
-	if (new_pressure != pressure_0->value && new_pressure > 0)
+	if (new_pressure != pressure_0->value && new_pressure > 0 && pressure_active->status() == 0)
 	{
 		pressure_0->value = new_pressure;
 
@@ -151,6 +151,20 @@ void MySensors::getPressure(int sensor = 0)
 			pressure_0->isValid = true;
 
 		pressure_0->timestamp = millis();
+	}
+}
+
+struct MyAltitude MySensors::altitude(int sensor = 0) {
+	switch (sensor)
+	{
+	case 0:
+		return altitude_0;
+	case 1:
+		return altitude_1;
+	case 2:
+		return altitude_2;
+	default:
+		return {};
 	}
 }
 

@@ -22,13 +22,13 @@ struct MyAltitude
 {
 	unsigned long timestamp = 0;
 	bool isValid = 0;
-	uint32_t value = 0;
-	uint32_t average = 0;
+	int32_t value = 0;
+	int32_t average = 0;
 	uint8_t buf[8];
 	size_t ret = 0;
 
 	static const int measurment_num = 30;
-	uint32_t history[measurment_num];
+	int32_t history[measurment_num];
 	uint8_t pointer = 0;
 };
 
