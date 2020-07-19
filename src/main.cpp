@@ -54,10 +54,15 @@ void loop()
 			button.time *= -1;
 			Serial.print("On for ");
 			Serial.println(button.time);
-
-			if (button.time > 5000)
+			
+			if (button.time > 10000)
 			{
 				flight.setPhase(0);
+			}
+
+			if (button.time > 5000 && button.time < 10000)
+			{
+				flight.setPhase(1);
 			}
 
 			if (button.time > 500 && button.time <5000)
