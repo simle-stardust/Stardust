@@ -79,7 +79,7 @@ void MyServo::move(uint8_t servo) {
 	digitalWrite(SERVO_DC, HIGH);
 	Serial.println(" POWER ON ");
 	delay(100);
-	pwm->setPWM(servo, 0, servos[servo-1].desired ? SERVOMAX : SERVOMIN);
+	pwm->setPWM(servo, 0, servos[servo-1].desired ? SERVOMIN : SERVOMAX);
 	servos[servo-1].status = servos[servo-1].desired;
 	lastOperation = millis();
 	
