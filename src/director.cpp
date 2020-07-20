@@ -47,7 +47,7 @@ void Flight::tick()
 				int LoRaPhase = (int)sensors.getStardustFlightStatus();
 				if ((LoRaPhase > flight.phase) && (LoRaPhase >= 0) && (LoRaPhase <= 4))
 				{
-					flight.phase = LoRaPhase;
+					nextPhase();
 					reason = REASON_LORA;
 				}
 			}
