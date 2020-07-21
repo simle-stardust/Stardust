@@ -39,4 +39,6 @@ public:
 	void setClosed(uint8_t servo);
 	bool getStatus(uint8_t servo);
 	bool ready();
+	void openSequence();
+	void closeSequence();
 };

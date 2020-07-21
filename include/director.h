@@ -5,7 +5,7 @@
 #include "servo.h"
 #include "sensors.h"
 
-#define SERVO_NUM (int)6
+#define SERVO_NUM (int)8
 
 #define PHASE_LOCK = 10000 // jak długo zablokować zmianę fazy na następną? minimalny czas trwania fazy lotu.
 

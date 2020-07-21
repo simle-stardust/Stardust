@@ -1,8 +1,8 @@
 #include "director.h"
 #include <EEPROM.h>
 
-Flight::Flight() : servos(SERVO_NUM) {
-
+Flight::Flight() : servos(SERVO_NUM)
+{
 }
 
 void Flight::init()
@@ -142,17 +142,13 @@ void Flight::tick()
 			if (flight.sampling == false) // run once
 			{
 				Serial.println(" Sampling ON");
-
 				Serial.println("Open sequence start");
-				
-				for (uint8_t i = 1; i <= SERVO_NUM; ++i)
-				{
-					servos.setOpen(i);
 
-					
-				}
+				servos.openSequence();
+
 				flight.sampling = true;
 			}
+
 
 			servos.tick();
 
@@ -182,22 +178,13 @@ void Flight::tick()
 				}
 			}
 
-
 			break;
 		case 3:							 // Sampling OFF
 			if (flight.sampling == true) // run once
 			{
 				Serial.println(" Sampling OFF - Safing");
 				Serial.println("Close sequence start");
-				Serial.print("Set ");
-				for (uint8_t i = 1; i <= SERVO_NUM; ++i)
-				{
-					servos.setClosed(i);
-
-					Serial.print(i);
-					Serial.print(", ");
-				}
-				Serial.println(" to Closed");
+				servos.closeSequence();
 				flight.sampling = false;
 			}
 
@@ -237,7 +224,6 @@ void Flight::tick()
 			}
 			break;
 		}
-		
 
 		this->saveFlightToEEPROM();
 
@@ -250,6 +236,9 @@ void Flight::nextPhase()
 	static unsigned long status_change_tick = 0;
 	static unsigned long time_since_change = 0;
 	static unsigned long min_duration = 60000;
+	
+	// TODO: Czy chcemy dodatkowy warunek?
+	//if(flight.phase == 2) min_duration = 20*60000;
 
 	time_since_change = millis() - status_change_tick;
 
@@ -280,7 +269,8 @@ void Flight::setPhase(int phase)
 	Serial.println(flight.phase);
 }
 
-void Flight::readFlightFromEEPROM() {
+void Flight::readFlightFromEEPROM()
+{
 
 	flight.phase = EEPROM.read(0);
 	flight.ground = EEPROM.read(sizeof(int));
@@ -289,7 +279,8 @@ void Flight::readFlightFromEEPROM() {
 	flight.finished = EEPROM.read(sizeof(int) + sizeof(bool) * 3);
 }
 
-void Flight::saveFlightToEEPROM() {
+void Flight::saveFlightToEEPROM()
+{
 	EEPROM.update(0, flight.phase);
 	EEPROM.update(sizeof(int), flight.ground);
 	EEPROM.update(sizeof(int) + sizeof(bool), flight.inFlight);
