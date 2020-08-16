@@ -1,14 +1,17 @@
 #include "logger.h"
 
-void Logger::init(MySD *_flash, MySensors *_sensors)
+void Logger::init(MySD *_flash, MySensors *_sensors, MyUDP *_udp)
 {
 	flash = _flash;
 	sensors = _sensors;
+	udp = _udp;
+
 	//flash->writeLine("Date,Time,RTC_Temp,DHT_Humid,DHT_Temp,DS_Temp,Pressure,Temperature");
 };
 
 void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool finished, reason_t reason)
 {
+	udp->tick();
 	sensors->readSensors(phase);
 
 	Serial.print("RTC:			");
@@ -196,5 +199,6 @@ void Logger::save()
 {
 	log += "\n";
 	flash->writeLine(log);
+	udp->writeLine(log);
 	log = "";
 }
