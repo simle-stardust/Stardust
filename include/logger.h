@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include "sdcard.h"
 #include "sensors.h"
+#include "myudp.h"
 
 #define SAMPLING_TIME 1000 // Czas próbkowania
 
@@ -18,9 +19,10 @@ class Logger {
 	String log = "";
 	MySD *flash;
 	MySensors *sensors;
+	MyUDP *udp;
 
 public:
-	void init(MySD *_flash, MySensors *_sensors);
+	void init(MySD *_flash, MySensors *_sensors, MyUDP *_udp);
 	void tick(int phase, bool ground, bool inFlight, bool sampling, bool finished, reason_t reason);
 
 	void add(String value);

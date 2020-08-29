@@ -27,6 +27,7 @@ private:
 	struct MyFlight flight;
 
 	MySD flash;
+	MyUDP udp;
 	MyRTC rtc;
 	MySensors sensors;
 	MyServo servos;
