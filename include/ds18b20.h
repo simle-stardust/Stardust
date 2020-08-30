@@ -1,4 +1,5 @@
 #pragma once
+#include <Arduino.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
@@ -21,3 +22,24 @@ public:
 	int getNumberOfDevices();
 	void printTemperature(DeviceAddress deviceAddress);
 };
+
+// // TODO: Why you no work ? :(
+// 
+// for (int i = 0; i < temp_main.getNumberOfDevices(); i++)
+// {
+// 	Serial.print("DS18B20 main [");
+// 	Serial.print(i);
+// 	Serial.print("]:				");
+// 	this->add(temp_main.getTemperature(i));
+// 	Serial.println(" *C;");
+// }
+
+// 
+// for (int i = 0; i < temp_sens.getNumberOfDevices(); i++)
+// {
+// 	Serial.print("DS18B20 sens [");
+// 	Serial.print(i);
+// 	Serial.print("]:				");
+// 	this->add(temp_sens.getTemperature(i));
+// 	Serial.println(" *C;");
+// }

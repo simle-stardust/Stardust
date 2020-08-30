@@ -34,27 +34,10 @@ void Flight::init()
 
 void Flight::tick()
 {
-	static unsigned long wifi_query_tick = 0;
 	static reason_t reason = (reason_t)0;
 
 	if (millis() - lastOperation > SAMPLING_TIME)
 	{
-		if (millis() - wifi_query_tick > 10000)
-		{
-			if (sensors.getLoRaStatus())
-			{
-				// if LoRa connection is valid, allow to overwrite current status
-				int LoRaPhase = (int)sensors.getStardustFlightStatus();
-				if ((LoRaPhase > flight.phase) && (LoRaPhase >= 0) && (LoRaPhase <= 4))
-				{
-					nextPhase();
-					reason = REASON_LORA;
-				}
-			}
-
-			wifi_query_tick = millis();
-		}
-
 		logger.tick(flight.phase, flight.ground, flight.inFlight, flight.sampling, flight.finished, reason); // Poll sensors and save to SD card each sampling period
 
 		switch (flight.phase)
