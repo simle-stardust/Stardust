@@ -36,10 +36,18 @@ void Flight::init()
 void Flight::tick()
 {
 	static reason_t reason = (reason_t)0;
+	int udp_phase = 0;
 
 	if (millis() - lastOperation > SAMPLING_TIME)
 	{
-		logger.tick(flight.phase, flight.ground, flight.inFlight, flight.sampling, flight.finished, reason); // Poll sensors and save to SD card each sampling period
+		// Poll sensors and UDP server and save to SD card each sampling period
+		udp_phase = logger.tick(flight.phase, flight.ground, flight.inFlight, 
+									flight.sampling, flight.finished, reason); 
+		if ((udp_phase != (int)UPLINK_NOTHING_RECEIVED) && (udp_phase > flight.phase) && (udp_phase >= 0) && (udp_phase <= 4))
+		{
+			nextPhase();
+			reason = REASON_UDP;
+		}
 
 		switch (flight.phase)
 		{

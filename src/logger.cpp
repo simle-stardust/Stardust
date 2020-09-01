@@ -9,8 +9,11 @@ void Logger::init(MySD *_flash, MySensors *_sensors, MyUDP *_udp)
 	//flash->writeLine("Date,Time,RTC_Temp,DHT_Humid,DHT_Temp,DS_Temp,Pressure,Temperature");
 };
 
-void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool finished, reason_t reason)
+int Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool finished, reason_t reason)
 {
+	int ret = UPLINK_NOTHING_RECEIVED;
+	uplink_t uplink;
+
 	sensors->readSensors();
 
 	Serial.print("RTC:			");
@@ -124,6 +127,30 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 		this->add(reason);
 		Serial.println();
 	this->save();
+
+	uplink = udp->tick();
+	switch (uplink)
+	{
+		case UPLINK_SET_STATE_0:
+			ret = 0;
+			break;
+		case UPLINK_SET_STATE_1:
+			ret = 1;
+			break;
+		case UPLINK_SET_STATE_2:
+			ret = 2;
+			break;
+		case UPLINK_SET_STATE_3:
+			ret = 3;
+			break;
+		case UPLINK_SET_STATE_4:
+			ret = 4;
+			break;
+		default:
+			ret = UPLINK_NOTHING_RECEIVED;
+			break;
+	}
+	return ret;
 };
 
 void Logger::add(String value)
@@ -169,6 +196,10 @@ void Logger::add(reason_t value)
 		case REASON_LORA:
 			Serial.print("LORA");
 			log += "LORA,";
+			break;
+		case REASON_UDP:
+			Serial.print("UDP");
+			log += "UDP,";
 			break;
 		default:
 			Serial.print("UNKNOWN");

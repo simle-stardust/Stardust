@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "director.h"
 
-#define BUTTON_PIN 46
+#define BUTTON_PIN 32
 
 Flight flight;
 
