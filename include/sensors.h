@@ -5,18 +5,19 @@
 #include "ds18b20.h"
 #include <HoneywellTruStabilitySPI.h>
 
-#define DHT22_main 33
-#define DHT22_mech 27
-#define DHT22_sens 41
+// Pinout definition
+#define DHT22_main 36
+#define DHT22_mech 45
+#define DHT22_sens 35
 
-#define ONE_WIRE_main 35
-#define ONE_WIRE_mech 31
-#define ONE_WIRE_sens 37
+#define ONE_WIRE_main 28
+#define ONE_WIRE_mech 47
+#define ONE_WIRE_sens 29
 
 #define LIFTOFF_PRESSURE 1014.0f
 
-#define PRESSURE_SS_main 25
-#define PRESSURE_SS_sens 39
+#define PRESSURE_SS_main 48
+#define PRESSURE_SS_sens 33
 
 struct MyAltitude
 {
@@ -55,6 +56,7 @@ private:
 
 	MyDHT dht_main;
 	MyDHT dht_sens;
+	MyDHT dht_mech;
 
 	// temperature
 	MyDS18B20 temp_main;
@@ -80,12 +82,12 @@ public:
 
 	void init(MyRTC *rtc);
 
-	void readSensors(int status);
+	void readSensors();
 
 	RtcDateTime time();
 	String getTime();
 	String getDate();
-	void getAltitude(int status);
+	void getAltitude();
 	void getPressure(int sensor);
 
 	struct MyAltitude altitude(int sensor);
@@ -95,15 +97,14 @@ public:
 
 	float pressureToAltitude(float seaLevel, float atmospheric, float temp);
 
-	bool getGPSStatus();
-	uint8_t getStardustFlightStatus();
-	bool getLoRaStatus();
-	bool getLiftoffStatus();
 
 	// Sensor ID's
-	// 0 - RTC (temperature)
-	// 1 - Pressure sensor on the main board (pres, temp)
-	// 2 - Pressure sensor on the sensor board (pres, temp)
-	// 3 - DHT 22 on the main board (humid, temp)
-	// 4 - DHT 22 on the sensor board (humid, temp)
+	// 0 - RTC (time, temperature) / GPS (altitude)
+	// 1 - Pressure sensor on the main board (pressure, temperature, altitude)
+	// 2 - Pressure sensor on the sensor board (pressure, temperature, altitude)
+	// 3 - DHT 22 on the main board (humidity, temperature)
+	// 4 - DHT 22 on the sensor board (humidity, temperature)
+	// 5 - DHT 22 on the mech board (humidity, temperature)
+	// 10 ... 19 - DS18B20 Main Board (temperature)
+	// 20 ... 29 - DS18B20 Sensor Board (temperature)
 };

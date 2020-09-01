@@ -11,8 +11,7 @@ void Logger::init(MySD *_flash, MySensors *_sensors, MyUDP *_udp)
 
 void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool finished, reason_t reason)
 {
-	udp->tick();
-	sensors->readSensors(phase);
+	sensors->readSensors();
 
 	Serial.print("RTC:			");
 		this->add(sensors->getDate());
@@ -101,46 +100,29 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 		this->add(sensors->temperature(4));
 		Serial.println(" *C;");
 
-	Serial.print("GPS status from main:		");
-		this->add(sensors->getGPSStatus());
-		Serial.println();
-	
-	Serial.print("Stardust status from main:   ");
-		this->add(sensors->getStardustFlightStatus());
-		Serial.println();
+	// Serial.print("DHT22 mech:		");
+	// 	this->add(sensors->humidity(5));
+	// 	Serial.print(" RH%,				");
+	// 	this->add(sensors->temperature(5));
+	// 	Serial.println(" *C;");
 
-	Serial.print("LoRa status from main:    ");
-		this->add(sensors->getLoRaStatus());
-		Serial.println();
-	
-	Serial.print("Liftoff status from main:  ");
-		this->add(sensors->getLiftoffStatus());
-		Serial.println();
+	Serial.print("DS18B20 main [1]:						");
+		this->add(sensors->temperature(10));
+		Serial.println(" *C;");
+	Serial.print("DS18B20 main [2]:						");
+		this->add(sensors->temperature(11));
+		Serial.println(" *C;");
+
+	Serial.print("DS18B20 sens [1]:						");
+		this->add(sensors->temperature(20));
+		Serial.println(" *C;");
+	Serial.print("DS18B20 sens [2]:						");
+		this->add(sensors->temperature(21));
+		Serial.println(" *C;");
 
 	Serial.print("Reason of change:   ");
 		this->add(reason);
 		Serial.println();
-
-	// // TODO: Why you no work ? :(
-	// temp_main.update();
-	// for (int i = 0; i < temp_main.getNumberOfDevices(); i++)
-	// {
-	// 	Serial.print("DS18B20 main [");
-	// 	Serial.print(i);
-	// 	Serial.print("]:				");
-	// 	this->add(temp_main.getTemperature(i));
-	// 	Serial.println(" *C;");
-	// }
-
-	// temp_sens.update();
-	// for (int i = 0; i < temp_sens.getNumberOfDevices(); i++)
-	// {
-	// 	Serial.print("DS18B20 sens [");
-	// 	Serial.print(i);
-	// 	Serial.print("]:				");
-	// 	this->add(temp_sens.getTemperature(i));
-	// 	Serial.println(" *C;");
-	// }
 	this->save();
 };
 

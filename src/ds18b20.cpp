@@ -61,6 +61,7 @@ void MyDS18B20::update()
 		if (sensors->getAddress(tempDeviceAddress, i))
 		{
 			float tempC = sensors->getTempC(tempDeviceAddress);
+			Serial.println(tempC);
 			if (tempC == DEVICE_DISCONNECTED_C)
 			{
 				Serial.println("Error: Could not read temperature data");

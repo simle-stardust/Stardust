@@ -1,8 +1,8 @@
 #include "sensors.h"
 
-#define DUPA
+//#define DUPA
 
-MySensors::MySensors() : onewire_main(ONE_WIRE_main), onewire_sens(ONE_WIRE_sens), dht_main(DHT22_main), dht_sens(DHT22_sens), pressure_main(PRESSURE_SS_main, 0, 15.0), pressure_sens(PRESSURE_SS_sens, 0, 15.0)
+MySensors::MySensors() : onewire_main(ONE_WIRE_main), onewire_sens(ONE_WIRE_sens), dht_main(DHT22_main), dht_sens(DHT22_sens), dht_mech(DHT22_mech), pressure_main(PRESSURE_SS_main, 0, 15.0), pressure_sens(PRESSURE_SS_sens, 0, 15.0)
 {
 }
 
@@ -15,16 +15,20 @@ void MySensors::init(MyRTC *_rtc)
 	pressure_sens.begin();
 }
 
-void MySensors::readSensors(int status)
+void MySensors::readSensors()
 {
 	rtc->getStatus();
+
+	// Temperature 
+	temp_sens.update();
+	temp_main.update();
 
 	// Pressure
 	getPressure(1);
 	getPressure(2);
 
 	// Altitude
-	getAltitude(status);
+	getAltitude();
 }
 
 RtcDateTime MySensors::time()
@@ -42,7 +46,7 @@ String MySensors::getTime()
 	return rtc->timeString(rtc->getTime());
 }
 
-void MySensors::getAltitude(int status)
+void MySensors::getAltitude()
 {
 	// Pressure Based [1, 2]
 
@@ -56,48 +60,19 @@ void MySensors::getAltitude(int status)
 	altitude_2.isValid = pressure_2.isValid;
 	altitude_2.timestamp = pressure_2.timestamp;
 
-	if ((status < 0) || (status > 4))
-	{
-		status = 255;
-	}
-
 	// GPS Based [0]
 
 	if (millis() - altitude_0.timestamp >= 5000 )
 	{
-		Serial3.print("@MarcinGetWysokosc:");
-		Serial3.print(status);
-		Serial3.println("!");
+		// TODO: Implement VA GPS
+		Serial3.print("@MarcinGetWysokosc!");
 		altitude_0.ret = Serial3.readBytes(&altitude_0.buf[0], 8);
 		Serial3.flush();
-
-		#ifdef DUPA
-			Serial.print("RECEIVED ");
-			Serial.print(altitude_0.ret);
-			Serial.print(" BYTES FROM WIFI: ");
-			Serial.print(altitude_0.buf[0]);
-			Serial.print(" ");
-			Serial.print(altitude_0.buf[1]);
-			Serial.print(" ");
-			Serial.print(altitude_0.buf[2]);
-			Serial.print(" ");
-			Serial.print(altitude_0.buf[3]);
-			Serial.print(" ");
-			Serial.print(altitude_0.buf[4]);
-			Serial.print(" ");
-			Serial.print(altitude_0.buf[5]);
-			Serial.print(" ");
-			Serial.print(altitude_0.buf[6]);
-			Serial.print(" ");
-			Serial.print(altitude_0.buf[7]);
-			Serial.println();
-		#endif
 
 		if (altitude_0.ret == 8 && altitude_0.buf[0] == '@' && altitude_0.buf[7] == '!')
 		{
 			int32_t new_altitude = (int32_t)(((uint32_t)altitude_0.buf[1] << 24) + ((uint32_t)altitude_0.buf[2] << 16) + ((uint32_t)altitude_0.buf[3] << 8) + (altitude_0.buf[4]));
 			
-			MainGondolaFlags = ((uint16_t)altitude_0.buf[5] << 8) + altitude_0.buf[6];
 			
 			// Update value and array, only if new, and within bounds
 			if (new_altitude != altitude_0.value && new_altitude >= 0 && new_altitude < 40000)
@@ -131,11 +106,6 @@ void MySensors::getAltitude(int status)
 				altitude_0.timestamp = millis();
 			}
 		}
-		else 
-		{
-			MainGondolaFlags = 0xFFFF;
-		}
-
 	}
 
 	if (millis() - altitude_0.timestamp > 60000)
@@ -240,6 +210,12 @@ float MySensors::temperature(int sensor = 0)
 		return dht_main.getTemperature();
 	case 4:
 		return dht_sens.getTemperature();
+	case 5:
+		return dht_mech.getTemperature();
+	case 10 ... 19:
+		return temp_main.getTemperature(sensor - 10);
+	case 20 ... 29:
+		return temp_sens.getTemperature(sensor - 20);
 	default:
 		return -1;
 	}
@@ -253,6 +229,8 @@ float MySensors::humidity(int sensor = 0)
 		return dht_main.getHumidity();
 	case 4:
 		return dht_sens.getHumidity();
+	case 5:
+		return dht_mech.getHumidity();
 	default:
 		return -1;
 	}
@@ -283,56 +261,4 @@ float MySensors::pressureToAltitude(float seaLevel = 1013.0, float atmospheric =
 	return (((float)pow((seaLevel / atmospheric), 0.190223F) - 1.0F) *
 			(temp + 273.15F)) /
 		   0.0065F;
-}
-
-bool MySensors::getGPSStatus()
-{
-	if (MainGondolaFlags == 0xFFFF)
-	{
-		return false;
-	}
-	else 
-	{
-		// check if GPS_ERR is ON in main gondola
-		return (MainGondolaFlags & 0x0800) ? false : true;
-	}
-}
-
-uint8_t MySensors::getStardustFlightStatus()
-{
-	if (MainGondolaFlags == 0xFFFF)
-	{
-		return 0xFF;
-	}
-	else 
-	{	// return 3 LSbits from MainGondola flags
-		return (MainGondolaFlags & 0x03);
-	}
-}
-
-bool MySensors::getLoRaStatus()
-{
-	if (MainGondolaFlags == 0xFFFF)
-	{
-		return false;
-	}
-	else 
-	{
-		// check if LORA_ERR is ON in main gondola
-		return (MainGondolaFlags & 0x2000) ? false : true;
-	}
-}	
-
-bool MySensors::getLiftoffStatus()
-{
-	if (MainGondolaFlags == 0xFFFF)
-	{
-		// flight is on is false in case of WiFi error
-		return false;
-	}
-	else 
-	{
-		// check if FLIGHT_IS_ON is ON in main gondola
-		return (MainGondolaFlags & 0x0040) ? true : false;
-	}
 }
