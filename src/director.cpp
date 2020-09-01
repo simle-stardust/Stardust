@@ -11,7 +11,8 @@ void Flight::init()
 	// Year/Month/Day directory with file named after init time.
 	flash.init(rtc.dateString(rtc.getTime()), rtc.timeString(rtc.getTime()));
 	sensors.init(&rtc);
-	logger.init(&flash, &sensors);
+	udp.init();
+	logger.init(&flash, &sensors, &udp);
 	servos.init();
 
 	readFlightFromEEPROM();
