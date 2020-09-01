@@ -31,6 +31,7 @@ private:
     char  TxBuffer[UDP_TX_PACKET_MAX_SIZE];  // a string to send back
     // An EthernetUDP instance to let us send and receive packets over UDP
     EthernetUDP Udp;
+    void sendResponse(const char *);
 
 public:
 	void init(void);

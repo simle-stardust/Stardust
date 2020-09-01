@@ -17,6 +17,15 @@ byte mac[6] = {0xA8, 0x61, 0x0A, 0xAE, 0x64, 0x31};
 	unsigned long port = 2137;
 #endif
 
+// Simple wrapper function that sends response to the 
+// host that we have received message from recently
+void MyUDP::sendResponse(const char * resp)
+{
+	Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+	Udp.write(resp);
+	Udp.endPacket();
+}
+
 void MyUDP::init(void)
 {
 	// start the Ethernet and UDP:
@@ -103,22 +112,27 @@ uplink_t MyUDP::tick(void)
 		}
 		else if (strcmp(RxBuffer, "setState0") == 0)
 		{
+			sendResponse("OK0");
 			ret = UPLINK_SET_STATE_0;
 		}
 		else if (strcmp(RxBuffer, "setState1") == 0)
 		{
+			sendResponse("OK1");
 			ret = UPLINK_SET_STATE_1;
 		}
 		else if (strcmp(RxBuffer, "setState2") == 0)
 		{
+			sendResponse("OK2");
 			ret = UPLINK_SET_STATE_2;
 		}
 		else if (strcmp(RxBuffer, "setState3") == 0)
 		{
+			sendResponse("OK3");
 			ret = UPLINK_SET_STATE_3;
 		}
 		else if (strcmp(RxBuffer, "setState4") == 0)
 		{
+			sendResponse("OK4");
 			ret = UPLINK_SET_STATE_4;
 		}
 		else if (strcmp(RxBuffer, "getAltitude") == 0)
