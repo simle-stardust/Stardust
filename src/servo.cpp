@@ -22,10 +22,16 @@ void MyServo::init()
 
 void MyServo::reset()
 {
+	Serial.println(" PWM RESET ");
 	for (uint8_t i = 0; i <= servoNumber; ++i)
 	{
 		pwm->setPWM(i, 0, 0);
 	}
+
+	digitalWrite(SERVO_DC, LOW);
+	Serial.println(" POWER RESET ");
+	delay(500);
+	digitalWrite(SERVO_DC, HIGH);
 }
 
 void MyServo::setOpen(uint8_t servo)
@@ -82,17 +88,12 @@ bool MyServo::ready()
 
 void MyServo::move(uint8_t servo)
 {
-	digitalWrite(SERVO_DC, HIGH);
-	Serial.println(" POWER ON ");
-	delay(100);
 	pwm->setPWM(servo, 0, servos[servo - 1].desired ? SERVOMIN : SERVOMAX);
-	delay(1500);
 	servos[servo - 1].status = servos[servo - 1].desired;
 	lastOperation = millis();
 	Serial.print(servos[servo - 1].desired ? "Opened " : "Closed ");
 	Serial.println(servo);
-	digitalWrite(SERVO_DC, LOW);
-	delay(100);
+	
 }
 
 void MyServo::openSequence()
