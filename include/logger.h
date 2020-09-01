@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include "sdcard.h"
 #include "sensors.h"
-#include "myudp.h"
+#include "udp.h"
 #include "adc.h"
 
 #define UPLINK_NOTHING_RECEIVED 0xFFFF
