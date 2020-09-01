@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "director.h"
 
-#define BUTTON_PIN 46
+#define BUTTON_PIN 32
 
 Flight flight;
 
@@ -40,13 +40,13 @@ void loop()
 	button.state = digitalRead(BUTTON_PIN);
 	if (button.state != button.lastState)
 	{
-		if (button.state == LOW)
+		if (button.state == HIGH)
 		{
 			// clicked
 			Serial.println("ON");
 			button.time = millis();
 		}
-		if (button.state == HIGH)
+		if (button.state == LOW)
 		{
 			// unclicked
 			Serial.println("OFF");
