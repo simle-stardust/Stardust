@@ -7,6 +7,8 @@
 
 #define SERVO_NUM (int)8
 
+#define SAMPLING_TIME 1000 // Czas próbkowania
+
 #define PHASE_LOCK = 10000 // jak długo zablokować zmianę fazy na następną? minimalny czas trwania fazy lotu.
 
 struct MyFlight
@@ -28,6 +30,7 @@ private:
 
 	MySD flash;
 	MyUDP udp;
+	MyADC adc;
 	MyRTC rtc;
 	MySensors sensors;
 	MyServo servos;

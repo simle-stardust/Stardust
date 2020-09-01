@@ -1,10 +1,11 @@
 #include "logger.h"
 
-void Logger::init(MySD *_flash, MySensors *_sensors, MyUDP *_udp)
+void Logger::init(MySD *_flash, MySensors *_sensors, MyUDP *_udp, MyADC*_adc)
 {
 	flash = _flash;
 	sensors = _sensors;
 	udp = _udp;
+	adc = _adc;
 
 	//flash->writeLine("Date,Time,RTC_Temp,DHT_Humid,DHT_Temp,DS_Temp,Pressure,Temperature");
 };
@@ -106,19 +107,35 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 	// 	this->add(sensors->temperature(5));
 	// 	Serial.println(" *C;");
 
-	Serial.print("DS18B20 main [1]:						");
-		this->add(sensors->temperature(10));
-		Serial.println(" *C;");
-	Serial.print("DS18B20 main [2]:						");
-		this->add(sensors->temperature(11));
-		Serial.println(" *C;");
+	// Serial.print("DS18B20 main [1]:						");
+	// 	this->add(sensors->temperature(10));
+	// 	Serial.println(" *C;");
+	// Serial.print("DS18B20 main [2]:						");
+	// 	this->add(sensors->temperature(11));
+	// 	Serial.println(" *C;");
 
-	Serial.print("DS18B20 sens [1]:						");
-		this->add(sensors->temperature(20));
-		Serial.println(" *C;");
-	Serial.print("DS18B20 sens [2]:						");
-		this->add(sensors->temperature(21));
-		Serial.println(" *C;");
+	// Serial.print("DS18B20 sens [1]:						");
+	// 	this->add(sensors->temperature(20));
+	// 	Serial.println(" *C;");
+	// Serial.print("DS18B20 sens [2]:						");
+	// 	this->add(sensors->temperature(21));
+	// 	Serial.println(" *C;");
+
+	adc->update();
+	Serial.print("ADC [1]:	");
+		this->add(adc->getADC(0));
+		Serial.println();
+	Serial.print("ADC [2]:	");
+		this->add(adc->getADC(1));
+		Serial.println();
+	Serial.print("ADC [3]:	");
+		this->add(adc->getADC(2));
+		Serial.println();
+	Serial.print("ADC [4]:	");
+		this->add(adc->getADC(3));
+		Serial.println();
+		
+	
 
 	Serial.print("Reason of change:   ");
 		this->add(reason);
@@ -181,6 +198,6 @@ void Logger::save()
 {
 	log += "\n";
 	flash->writeLine(log);
-	udp->writeLine(log);
+	//udp->writeLine(log);
 	log = "";
 }

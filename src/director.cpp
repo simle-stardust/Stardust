@@ -12,7 +12,8 @@ void Flight::init()
 	flash.init(rtc.dateString(rtc.getTime()), rtc.timeString(rtc.getTime()));
 	sensors.init(&rtc);
 	udp.init();
-	logger.init(&flash, &sensors, &udp);
+	adc.init();
+	logger.init(&flash, &sensors, &udp, &adc);
 	servos.init();
 
 	readFlightFromEEPROM();
@@ -220,9 +221,6 @@ void Flight::nextPhase()
 	static unsigned long status_change_tick = 0;
 	static unsigned long time_since_change = 0;
 	static unsigned long min_duration = 60000;
-	
-	// TODO: Czy chcemy dodatkowy warunek?
-	//if(flight.phase == 2) min_duration = 20*60000;
 
 	time_since_change = millis() - status_change_tick;
 

@@ -3,8 +3,7 @@
 #include "sdcard.h"
 #include "sensors.h"
 #include "myudp.h"
-
-#define SAMPLING_TIME 1000 // Czas próbkowania
+#include "adc.h"
 
 typedef enum reason_t_def
 {
@@ -20,9 +19,10 @@ class Logger {
 	MySD *flash;
 	MySensors *sensors;
 	MyUDP *udp;
+	MyADC *adc;
 
 public:
-	void init(MySD *_flash, MySensors *_sensors, MyUDP *_udp);
+	void init(MySD *_flash, MySensors *_sensors, MyUDP *_udp, MyADC *_adc);
 	void tick(int phase, bool ground, bool inFlight, bool sampling, bool finished, reason_t reason);
 
 	void add(String value);
