@@ -123,8 +123,7 @@ int Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fini
 	// Serial.print("DS18B20 sens [2]:						");
 	// 	this->add(sensors->temperature(21));
 	// 	Serial.println(" *C;");
-
-	adc->update();
+	
 	Serial.print("ADC [1]:	");
 		this->add(adc->getADC(0));
 		Serial.println();

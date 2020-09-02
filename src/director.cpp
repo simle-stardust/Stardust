@@ -41,6 +41,8 @@ void Flight::tick()
 
 	if (millis() - lastOperation > SAMPLING_TIME)
 	{
+		adc.tick();
+		
 		// Poll sensors and UDP server and save to SD card each sampling period
 		udp_phase = logger.tick(flight.phase, flight.ground, flight.inFlight, 
 									flight.sampling, flight.finished, reason); 

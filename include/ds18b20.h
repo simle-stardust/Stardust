@@ -16,7 +16,7 @@ private:
 
 public:
 	void init(OneWire oneWire);
-	void update();
+	void tick();
 	float readTemperature(DeviceAddress deviceAddress);
 	float getTemperature(int i);
 	int getNumberOfDevices();

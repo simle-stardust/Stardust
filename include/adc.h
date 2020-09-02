@@ -20,14 +20,14 @@ class MyADC {
         pinMode(INA4, INPUT);
     }
 
-    void update() {
+    void tick() {
         adc[0] = analogRead(INA1);
         adc[1] = analogRead(INA2);
         adc[2] = analogRead(INA3);
         adc[3] = analogRead(INA4);
     }
 
-    int getADC(int number) {
-        return adc[number];
+    float getADC(int number) {
+        return float(adc[number] * 5) / 1024;
     }
 };
