@@ -1,18 +1,25 @@
 #include "sensors.h"
 
-//#define DUPA
-
 MySensors::MySensors() : onewire_main(ONE_WIRE_main), onewire_sens(ONE_WIRE_sens), dht_main(DHT22_main), dht_sens(DHT22_sens), dht_mech(DHT22_mech), pressure_main(PRESSURE_SS_main, 0, 15.0), pressure_sens(PRESSURE_SS_sens, 0, 15.0)
 {
 }
 
-void MySensors::init(MyRTC *_rtc)
+void MySensors::init(MyRTC *_rtc, Adafruit_GPS* _GPS_main)
 {
 	rtc = _rtc;
+	GPS_main = _GPS_main;
 	temp_main.init(onewire_main);
 	temp_sens.init(onewire_sens);
 	pressure_main.begin();
 	pressure_sens.begin();
+	GPS_main->begin(9600);
+	// For parsing data, we don't suggest using anything but either RMC only or RMC+GGA since
+	// the parser doesn't care about other sentences at this time
+	// Set the update rate
+	GPS_main->sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+	// For the parsing code to work nicely and have time to sort thru the data, and
+	// print it out we don't suggest using anything higher than 1 Hz
+	GPS_main->sendCommand(PMTK_SET_NMEA_UPDATE_1HZ); // 1 Hz update rate
 }
 
 void MySensors::readSensors()
@@ -60,52 +67,38 @@ void MySensors::getAltitude()
 	altitude_2.isValid = pressure_2.isValid;
 	altitude_2.timestamp = pressure_2.timestamp;
 
-	// GPS Based [0]
+	int32_t new_altitude = GPS_main->altitude;	
 
-	if (millis() - altitude_0.timestamp >= 5000 )
+	// Update value and array, only if new, and within bounds
+	if (new_altitude != altitude_0.value && new_altitude >= 0 && new_altitude < 40000)
 	{
-		// TODO: Implement VA GPS
-		Serial3.print("@MarcinGetWysokosc!");
-		altitude_0.ret = Serial3.readBytes(&altitude_0.buf[0], 8);
-		Serial3.flush();
+		altitude_0.value = new_altitude;
 
-		if (altitude_0.ret == 8 && altitude_0.buf[0] == '@' && altitude_0.buf[7] == '!')
+		// add value to array in order to calculate avg. alt.
+		altitude_0.history[altitude_0.pointer] = altitude_0.value;
+		altitude_0.pointer++;
+		if (altitude_0.pointer > (altitude_0.measurment_num - 1) || altitude_0.pointer < 0)
 		{
-			int32_t new_altitude = (int32_t)(((uint32_t)altitude_0.buf[1] << 24) + ((uint32_t)altitude_0.buf[2] << 16) + ((uint32_t)altitude_0.buf[3] << 8) + (altitude_0.buf[4]));
-			
-			
-			// Update value and array, only if new, and within bounds
-			if (new_altitude != altitude_0.value && new_altitude >= 0 && new_altitude < 40000)
+			altitude_0.pointer = 0;
+		}
+
+		altitude_0.average = 0;
+		int avg_num = 0;
+		for (uint8_t i = 0; i < altitude_0.measurment_num; i++)
+		{
+			if (altitude_0.history[i] != 0)
 			{
-				altitude_0.value = new_altitude;
-
-				// add value to array in order to calculate avg. alt.
-				altitude_0.history[altitude_0.pointer] = altitude_0.value;
-				altitude_0.pointer++;
-				if (altitude_0.pointer > (altitude_0.measurment_num - 1) || altitude_0.pointer < 0)
-				{
-					altitude_0.pointer = 0;
-				}
-
-				altitude_0.average = 0;
-				int avg_num = 0;
-				for (uint8_t i = 0; i < altitude_0.measurment_num; i++)
-				{
-					if (altitude_0.history[i] != 0)
-					{
-						altitude_0.average += altitude_0.history[i];
-						avg_num++;
-					}
-				}
-				altitude_0.average /= avg_num;
-
-				if (millis() - altitude_0.timestamp < 60000 && altitude_0.timestamp != 0 && avg_num > 5)
-					altitude_0.isValid = true;
-
-				altitude_0.ret = 0;
-				altitude_0.timestamp = millis();
+				altitude_0.average += altitude_0.history[i];
+				avg_num++;
 			}
 		}
+		altitude_0.average /= avg_num;
+
+		if (millis() - altitude_0.timestamp < 60000 && altitude_0.timestamp != 0 && avg_num > 5)
+			altitude_0.isValid = true;
+
+		altitude_0.ret = 0;
+		altitude_0.timestamp = millis();
 	}
 
 	if (millis() - altitude_0.timestamp > 60000)

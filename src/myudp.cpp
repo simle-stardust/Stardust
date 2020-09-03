@@ -7,8 +7,8 @@ byte mac[6] = {0xA8, 0x61, 0x0A, 0xAE, 0x64, 0x31};
 #define HACKERSPACE_TESTING
 
 #ifdef HACKERSPACE_TESTING
-IPAddress ip(10, 14, 10, 40);
-IPAddress ground_ip(10, 14, 10, 39);
+IPAddress ip(192, 168, 88, 237);
+IPAddress ground_ip(192, 168, 88, 236);
 unsigned long port = 56556;
 #else
 // TO DO: change to actual addresses used in BEXUS

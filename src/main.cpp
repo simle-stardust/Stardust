@@ -20,9 +20,6 @@ void setup()
 	pinMode(13, OUTPUT);
 	pinMode(BUTTON_PIN, INPUT);
 
-	Serial3.begin(115200);
-	Serial3.setTimeout(1000);
-
 	Serial.begin(115200);
 	Serial.print("compiled: ");
 	Serial.println(__DATE__);
@@ -80,5 +77,4 @@ void loop()
 	//Serial.print("Loop time: ");
 	//Serial.println(loopTimer * -1);
 	//delay(1000 + loopTimer); // Slow down the loop.
-	delay(100);
 }

@@ -4,6 +4,7 @@
 #include "dht22.h"
 #include "ds18b20.h"
 #include <HoneywellTruStabilitySPI.h>
+#include <Adafruit_GPS.h>
 
 // Pinout definition
 #define DHT22_main 36
@@ -65,6 +66,9 @@ private:
 	// pressure
 	TruStabilityPressureSensor pressure_main;
 	TruStabilityPressureSensor pressure_sens;
+	
+	Adafruit_GPS *GPS_main;
+
 	struct MyPressure pressure_1;
 	struct MyPressure pressure_2;
 
@@ -80,7 +84,7 @@ public:
 
 	MySensors();
 
-	void init(MyRTC *rtc);
+	void init(MyRTC *rtc, Adafruit_GPS* _GPS_main);
 
 	void readSensors();
 

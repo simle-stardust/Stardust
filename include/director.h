@@ -4,6 +4,7 @@
 #include "rtc.h"
 #include "servo.h"
 #include "sensors.h"
+#include <Adafruit_GPS.h>
 
 #define SERVO_NUM (int)8
 
@@ -31,6 +32,7 @@ private:
 	MyRTC rtc;
 	MySensors sensors;
 	MyServo servos;
+	Adafruit_GPS GPS_main;
 	Logger logger;
 
 	unsigned long lastOperation = 0;

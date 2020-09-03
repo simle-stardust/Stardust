@@ -1,7 +1,7 @@
 #include "director.h"
 #include <EEPROM.h>
 
-Flight::Flight() : servos(SERVO_NUM)
+Flight::Flight() : servos(SERVO_NUM), GPS_main(&Serial3)
 {
 }
 
@@ -10,7 +10,7 @@ void Flight::init()
 	rtc.init();
 	// Year/Month/Day directory with file named after init time.
 	flash.init(rtc.dateString(rtc.getTime()), rtc.timeString(rtc.getTime()));
-	sensors.init(&rtc);
+	sensors.init(&rtc, &GPS_main);
 	udp.init();
 	logger.init(&flash, &sensors, &udp);
 	servos.init();
@@ -36,6 +36,26 @@ void Flight::init()
 void Flight::tick()
 {
 	static reason_t reason = (reason_t)0;
+
+	// read data from the GPS in the 'main loop'
+	char c = GPS_main.read();
+
+#ifdef GPS_DEBUG
+	// if you want to debug, this is a good time to do it!
+	if (c) Serial.print(c);
+#endif
+
+
+	if (GPS_main.newNMEAreceived()) {
+#ifdef GPS_DEBUG
+		Serial.println("NEW GPS DATA");
+		Serial.println(GPS_main.lastNMEA()); // this also sets the newNMEAreceived() flag to false
+#endif
+		// a tricky thing here is if we print the NMEA sentence, or data
+		// we end up not listening and catching other sentences!
+		// so be very wary if using OUTPUT_ALLDATA and trying to print out data
+		GPS_main.parse(GPS_main.lastNMEA()); // this also sets the newNMEAreceived() flag to false
+	}
 
 	if (millis() - lastOperation > SAMPLING_TIME)
 	{
