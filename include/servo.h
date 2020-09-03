@@ -10,7 +10,7 @@
 
 #define ADDRESS 0x40
 
-#define SERVO_DC 47
+#define SERVO_DC A2
 
 struct servo_status {
 	bool status = 0;

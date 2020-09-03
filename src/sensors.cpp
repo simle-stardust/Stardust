@@ -27,8 +27,8 @@ void MySensors::readSensors()
 	rtc->getStatus();
 
 	// Temperature 
-	temp_sens.update();
-	temp_main.update();
+	temp_sens.tick();
+	temp_main.tick();
 
 	// Pressure
 	getPressure(1);

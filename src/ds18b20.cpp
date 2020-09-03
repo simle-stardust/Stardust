@@ -52,7 +52,7 @@ void MyDS18B20::init(OneWire oneWire)
 		}
 	}
 }
-void MyDS18B20::update()
+void MyDS18B20::tick()
 {
 	sensors->requestTemperatures();
 

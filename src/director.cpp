@@ -12,7 +12,8 @@ void Flight::init()
 	flash.init(rtc.dateString(rtc.getTime()), rtc.timeString(rtc.getTime()));
 	sensors.init(&rtc, &GPS_main);
 	udp.init();
-	logger.init(&flash, &sensors, &udp);
+	adc.init();
+	logger.init(&flash, &sensors, &udp, &adc);
 	servos.init();
 
 	readFlightFromEEPROM();
@@ -36,6 +37,7 @@ void Flight::init()
 void Flight::tick()
 {
 	static reason_t reason = (reason_t)0;
+	int udp_phase = 0;
 
 	// read data from the GPS in the 'main loop'
 	char c = GPS_main.read();
@@ -59,7 +61,16 @@ void Flight::tick()
 
 	if (millis() - lastOperation > SAMPLING_TIME)
 	{
-		logger.tick(flight.phase, flight.ground, flight.inFlight, flight.sampling, flight.finished, reason); // Poll sensors and save to SD card each sampling period
+		adc.tick();
+		
+		// Poll sensors and UDP server and save to SD card each sampling period
+		udp_phase = logger.tick(flight.phase, flight.ground, flight.inFlight, 
+									flight.sampling, flight.finished, reason); 
+		if ((udp_phase != (int)UPLINK_NOTHING_RECEIVED) && (udp_phase > flight.phase) && (udp_phase >= 0) && (udp_phase <= 4))
+		{
+			nextPhase();
+			reason = REASON_UDP;
+		}
 
 		switch (flight.phase)
 		{
@@ -240,9 +251,6 @@ void Flight::nextPhase()
 	static unsigned long status_change_tick = 0;
 	static unsigned long time_since_change = 0;
 	static unsigned long min_duration = 60000;
-	
-	// TODO: Czy chcemy dodatkowy warunek?
-	//if(flight.phase == 2) min_duration = 20*60000;
 
 	time_since_change = millis() - status_change_tick;
 
