@@ -4,22 +4,16 @@
 #include <Ethernet.h>
 #include <EthernetUdp.h>  // UDP library from: bjoern@cs.stanford.edu 12/30/2008
 
+#define LAST_RX_VAL_NONE  (0xFF)
+
 typedef enum uplink_t_def
 {
     UPLINK_NONE,
     UPLINK_PING,
-    UPLINK_STATUS,
-    UPLINK_GET_STATE,
-    UPLINK_SET_STATE_0,
-    UPLINK_SET_STATE_1,
-    UPLINK_SET_STATE_2,
-    UPLINK_SET_STATE_3,
-    UPLINK_SET_STATE_4,
-    UPLINK_GET_ALTITUDE,
-    UPLINK_GET_POSITION,
-    UPLINK_GET_SERVOS,
-    UPLINK_GET_PUMP,
-    UPLINK_GET_SENSORS,
+    UPLINK_SET_STATE,
+    UPLINK_SET_VALVE,
+    UPLINK_SET_PUMP,
+    UPLINK_SET_HEATING,
 } uplink_t;
 
 class MyUDP
@@ -31,10 +25,18 @@ private:
     char  TxBuffer[UDP_TX_PACKET_MAX_SIZE];  // a string to send back
     // An EthernetUDP instance to let us send and receive packets over UDP
     EthernetUDP Udp;
+    uint32_t pingTime;
+    uplink_t last_rx_uplink;
+
+    uint8_t last_rx_val1;
+    uint8_t last_rx_val2;
+    
     void sendResponse(const char *);
 
 public:
 	void init(void);
 	void writeLine(String line);
-    uplink_t tick(void);
+    String tick(void);
+    uint32_t timeSinceLastPing(void);
+    uplink_t getLastUplink(uint8_t* val1, uint8_t* val2);
 };

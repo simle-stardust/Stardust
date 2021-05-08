@@ -2,10 +2,10 @@
 #include <Arduino.h>
 #include "sdcard.h"
 #include "sensors.h"
-#include "udp.h"
+#include "servo.h"
+#include "myudp.h"
 #include "adc.h"
-
-#define UPLINK_NOTHING_RECEIVED 0xFFFF
+#include "pwm.h"
 
 typedef enum reason_t_def
 {
@@ -23,16 +23,20 @@ class Logger {
 	MySensors *sensors;
 	MyUDP *udp;
 	MyADC *adc;
+	MyServo *servos;
+	MyPWMs *pwms;
 
 public:
-	void init(MySD *_flash, MySensors *_sensors, MyUDP *_udp, MyADC *_adc);
-	int tick(int phase, bool ground, bool inFlight, bool sampling, bool finished, reason_t reason);
+	void init(MySD *_flash, MySensors *_sensors, MyUDP *_udp, MyADC *_adc, MyServo *_servos, MyPWMs *_pwms);
+	void tick(int phase, bool ground, bool inFlight, bool sampling, bool finished, reason_t reason);
 
 	void add(String value);
 	void add(float value);
 	void add(int value);
+	void add(uint32_t value);
 	void add(int32_t value);
 	void add(reason_t value);
 	void save();
 	String line();
+	void write_to_sd(String value);
 };

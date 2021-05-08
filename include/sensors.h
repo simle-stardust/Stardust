@@ -91,12 +91,14 @@ public:
 	RtcDateTime time();
 	String getTime();
 	String getDate();
+	int isDateTimeValid();
 	void getAltitude();
 	void getPressure(int sensor);
 
 	struct MyAltitude altitude(int sensor);
 	struct MyPressure pressure(int sensor);
 	float temperature(int sensor);
+	int temperatureStatus(int sensor);
 	float humidity(int sensor);
 
 	float pressureToAltitude(float seaLevel, float atmospheric, float temp);

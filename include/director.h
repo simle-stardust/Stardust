@@ -4,6 +4,7 @@
 #include "rtc.h"
 #include "servo.h"
 #include "sensors.h"
+#include "pwm.h"
 #include <Adafruit_GPS.h>
 
 #define SERVO_NUM (int)8
@@ -37,6 +38,7 @@ private:
 	MyServo servos;
 	Adafruit_GPS GPS_main;
 	Logger logger;
+	MyPWMs pwms;
 
 	unsigned long lastOperation = 0;
 	unsigned long lastPhaseChange = 0;

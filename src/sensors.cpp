@@ -53,6 +53,11 @@ String MySensors::getTime()
 	return rtc->timeString(rtc->getTime());
 }
 
+int MySensors::isDateTimeValid()
+{
+	return rtc->getStatus();
+}
+
 void MySensors::getAltitude()
 {
 	// Pressure Based [1, 2]
@@ -211,6 +216,22 @@ float MySensors::temperature(int sensor = 0)
 		return temp_sens.getTemperature(sensor - 20);
 	default:
 		return -1;
+	}
+};
+
+int MySensors::temperatureStatus(int sensor = 0)
+{
+	switch (sensor)
+	{
+	case 3:
+		return dht_main.getStatus();
+	case 4:
+		return dht_sens.getStatus();
+	case 5:
+		return dht_mech.getStatus();
+	default:
+		// TODO: implement other sensors
+		return 0;
 	}
 };
 

@@ -13,8 +13,8 @@ void Flight::init()
 	sensors.init(&rtc, &GPS_main);
 	udp.init();
 	adc.init();
-	logger.init(&flash, &sensors, &udp, &adc);
 	servos.init();
+	logger.init(&flash, &sensors, &udp, &adc, &servos, &pwms);
 
 	readFlightFromEEPROM();
 
@@ -37,10 +37,16 @@ void Flight::init()
 void Flight::tick()
 {
 	static reason_t reason = (reason_t)0;
-	int udp_phase = 0;
+	
+	uplink_t last_uplink = UPLINK_NONE;
+	uint8_t uplink_val1 = 0;
+	uint8_t uplink_val2 = 0;
+	uint32_t time_since_last_uplink = 0;
+
 
 	// read data from the GPS in the 'main loop'
-	char c = GPS_main.read();
+	(void)GPS_main.read();
+
 
 #ifdef GPS_DEBUG
 	// if you want to debug, this is a good time to do it!
@@ -64,12 +70,49 @@ void Flight::tick()
 		adc.tick();
 		
 		// Poll sensors and UDP server and save to SD card each sampling period
-		udp_phase = logger.tick(flight.phase, flight.ground, flight.inFlight, 
+		logger.tick(flight.phase, flight.ground, flight.inFlight, 
 									flight.sampling, flight.finished, reason); 
-		if ((udp_phase != (int)UPLINK_NOTHING_RECEIVED) && (udp_phase > flight.phase) && (udp_phase >= 0) && (udp_phase <= 4))
+
+		last_uplink = udp.getLastUplink(&uplink_val1, &uplink_val2);
+		time_since_last_uplink = udp.timeSinceLastPing();
+
+		switch (last_uplink)
 		{
-			nextPhase();
-			reason = REASON_UDP;
+			case UPLINK_SET_HEATING:
+				pwms.set(PWM_HEATING, uplink_val1);
+				break;
+			case UPLINK_SET_PUMP:
+				if (uplink_val1 == 1)
+				{
+					pwms.set(PWM_PUMP_1, uplink_val2);
+				}
+				else if (uplink_val1 == 2)
+				{
+					pwms.set(PWM_PUMP_2, uplink_val2);
+				}
+				break;
+			case UPLINK_SET_VALVE:
+				// should we implement some logic to prevent 
+				// manual opening and closing if we are in some specific state?
+				if (uplink_val2 == 0)
+				{
+					//open
+					servos.setOpen(uplink_val1);
+				}
+				else if (uplink_val2 == 1)
+				{
+					//close
+					servos.setClosed(uplink_val1);
+				}
+				break;
+			case UPLINK_SET_STATE:
+				if ((uplink_val1 > flight.phase) && (uplink_val1 >= 0) && (uplink_val1 <= 4))
+				{
+					nextPhase();
+				}
+				break;
+			default:
+				break;
 		}
 
 		switch (flight.phase)
@@ -91,29 +134,34 @@ void Flight::tick()
 				flight.finished = false;
 			}
 
-			// Check if it's time to switch state
-			if (sensors.altitude(0).isValid)
+			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
+			// IN MANUAL MODE (LONG TIME HAS PASSED SINCE LAST PING)
+			if (time_since_last_uplink > 120)
 			{
-				if (sensors.altitude(0).average > 300)
+				// Check if it's time to switch state
+				if (sensors.altitude(0).isValid)
 				{
-					reason = REASON_ALTITUDE;
-					this->nextPhase();
+					if (sensors.altitude(0).average > 300)
+					{
+						reason = REASON_ALTITUDE;
+						this->nextPhase();
+					}
 				}
-			}
-			else if (sensors.altitude(1).isValid)
-			{
-				if (sensors.altitude(1).average > 1000)
+				else if (sensors.altitude(1).isValid)
 				{
-					reason = REASON_PRESSURE1;
-					this->nextPhase();
+					if (sensors.altitude(1).average > 1000)
+					{
+						reason = REASON_PRESSURE1;
+						this->nextPhase();
+					}
 				}
-			}
-			else if (sensors.altitude(2).isValid)
-			{
-				if (sensors.altitude(2).average > 1000)
+				else if (sensors.altitude(2).isValid)
 				{
-					reason = REASON_PRESSURE2;
-					this->nextPhase();
+					if (sensors.altitude(2).average > 1000)
+					{
+						reason = REASON_PRESSURE2;
+						this->nextPhase();
+					}
 				}
 			}
 
@@ -126,29 +174,34 @@ void Flight::tick()
 				flight.inFlight = true;
 			}
 
-			// Check if it's time to switch state
-			if (sensors.altitude(0).isValid)
+			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
+			// IN MANUAL MODE (LONG TIME HAS PASSED SINCE LAST PING)
+			if (time_since_last_uplink > 120)
 			{
-				if (sensors.altitude(0).average > 13000)
+				// Check if it's time to switch state
+				if (sensors.altitude(0).isValid)
 				{
-					reason = REASON_ALTITUDE;
-					this->nextPhase();
+					if (sensors.altitude(0).average > 13000)
+					{
+						reason = REASON_ALTITUDE;
+						this->nextPhase();
+					}
 				}
-			}
-			else if (sensors.altitude(1).isValid)
-			{
-				if (sensors.altitude(1).average > 15000)
+				else if (sensors.altitude(1).isValid)
 				{
-					reason = REASON_PRESSURE1;
-					this->nextPhase();
+					if (sensors.altitude(1).average > 15000)
+					{
+						reason = REASON_PRESSURE1;
+						this->nextPhase();
+					}
 				}
-			}
-			else if (sensors.altitude(2).isValid)
-			{
-				if (sensors.altitude(2).average > 15000)
+				else if (sensors.altitude(2).isValid)
 				{
-					reason = REASON_PRESSURE2;
-					this->nextPhase();
+					if (sensors.altitude(2).average > 15000)
+					{
+						reason = REASON_PRESSURE2;
+						this->nextPhase();
+					}
 				}
 			}
 
@@ -167,29 +220,34 @@ void Flight::tick()
 
 			servos.tick();
 
-			// Check if it's time to switch state
-			if (sensors.altitude(0).isValid)
+			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
+			// IN MANUAL MODE (LONG TIME HAS PASSED SINCE LAST PING)
+			if (time_since_last_uplink > 120)
 			{
-				if (sensors.altitude(0).average < 12000)
+				// Check if it's time to switch state
+				if (sensors.altitude(0).isValid)
 				{
-					reason = REASON_ALTITUDE;
-					this->nextPhase();
+					if (sensors.altitude(0).average < 12000)
+					{
+						reason = REASON_ALTITUDE;
+						this->nextPhase();
+					}
 				}
-			}
-			else if (sensors.altitude(1).isValid)
-			{
-				if (sensors.altitude(1).average < 10000)
+				else if (sensors.altitude(1).isValid)
 				{
-					reason = REASON_PRESSURE1;
-					this->nextPhase();
+					if (sensors.altitude(1).average < 10000)
+					{
+						reason = REASON_PRESSURE1;
+						this->nextPhase();
+					}
 				}
-			}
-			else if (sensors.altitude(2).isValid)
-			{
-				if (sensors.altitude(2).average < 10000)
+				else if (sensors.altitude(2).isValid)
 				{
-					reason = REASON_PRESSURE2;
-					this->nextPhase();
+					if (sensors.altitude(2).average < 10000)
+					{
+						reason = REASON_PRESSURE2;
+						this->nextPhase();
+					}
 				}
 			}
 
@@ -204,30 +262,35 @@ void Flight::tick()
 			}
 
 			servos.tick();
-
-			// Check if it's time to switch state
-			if (sensors.altitude(0).isValid)
+			
+			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
+			// IN MANUAL MODE (LONG TIME HAS PASSED SINCE LAST PING)
+			if (time_since_last_uplink > 120)
 			{
-				if (sensors.altitude(0).average < 1000)
+				// Check if it's time to switch state
+				if (sensors.altitude(0).isValid)
 				{
-					reason = REASON_ALTITUDE;
-					this->nextPhase();
+					if (sensors.altitude(0).average < 1000)
+					{
+						reason = REASON_ALTITUDE;
+						this->nextPhase();
+					}
 				}
-			}
-			else if (sensors.altitude(1).isValid)
-			{
-				if (sensors.altitude(1).average < 1000)
+				else if (sensors.altitude(1).isValid)
 				{
-					reason = REASON_PRESSURE1;
-					this->nextPhase();
+					if (sensors.altitude(1).average < 1000)
+					{
+						reason = REASON_PRESSURE1;
+						this->nextPhase();
+					}
 				}
-			}
-			else if (sensors.altitude(2).isValid)
-			{
-				if (sensors.altitude(2).average < 1000)
+				else if (sensors.altitude(2).isValid)
 				{
-					reason = REASON_PRESSURE2;
-					this->nextPhase();
+					if (sensors.altitude(2).average < 1000)
+					{
+						reason = REASON_PRESSURE2;
+						this->nextPhase();
+					}
 				}
 			}
 

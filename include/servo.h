@@ -3,6 +3,8 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 
+#define NB_OF_SERVOS  7
+
 #define SERVOMIN  300 // This is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  600 // This is the 'maximum' pulse length count (out of 4096)
 #define SERVO_FREQ 60
@@ -22,7 +24,7 @@ private:
 	Adafruit_PWMServoDriver *pwm;
 
 	unsigned int servoNumber = 0;
-	struct servo_status servos[16];
+	struct servo_status servos[NB_OF_SERVOS];
 
 	uint8_t servo_pointer = 0;
 
