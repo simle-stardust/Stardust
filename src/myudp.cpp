@@ -7,24 +7,21 @@ byte mac[6] = {0xA8, 0x61, 0x0A, 0xAE, 0x64, 0x31};
 #define HACKERSPACE_TESTING
 
 #ifdef HACKERSPACE_TESTING
-	IPAddress ip(192, 168, 88, 237);
-	IPAddress ground_ip(192, 168, 88, 236);
-	unsigned long port = 56161;
+	// actually it can be assigned to us automatically
+	// by DHCP, at least in my home //Szymon
+	IPAddress our_ip(192, 168, 88, 237);
+	// IP address we will be sending data to
+	IPAddress ground_ip(192, 168, 0, 108);
+	// port on which we will be listening for data
+	unsigned long our_port = 2137;
+	// port we are sending data to
+	unsigned long ground_port = 51299;
 #else
 	// TO DO: change to actual addresses used in BEXUS
 	IPAddress ip(192, 168, 1, 3);
 	IPAddress ground_ip(192, 168, 1, 1);
 	unsigned long port = 2137;
 #endif
-
-// Simple wrapper function that sends response to the 
-// host that we have received message from recently
-void MyUDP::sendResponse(const char * resp)
-{
-	Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-	Udp.write(resp);
-	Udp.endPacket();
-}
 
 void MyUDP::init(void)
 {
@@ -36,9 +33,35 @@ void MyUDP::init(void)
 
 	// start the Ethernet and UDP:
   	Ethernet.init(10);  // Most Arduino shields
-	Ethernet.begin(mac, ip);
-	Udp.begin(port);
+
+
+	// TODO: Change init function if using static config
+	if (Ethernet.begin(mac, 10000, 10000) != 1) // timeouts for DNS
+	{
+		status = -1;
+		Serial.println("UDP: error");
+		return;
+	}
+	if (Udp.begin(our_port) != 1)
+	{
+		status = -1;
+		Serial.println("UDP: error");
+		return;
+	}
+	status = 0;
 	Serial.println("UDP: ok");
+
+	IPAddress assigned_ip = Ethernet.localIP();
+	String toPrint = "UDP: our Address = ";
+	toPrint += assigned_ip[0];
+	toPrint += ".";
+	toPrint += assigned_ip[1];
+	toPrint += ".";
+	toPrint += assigned_ip[2];
+	toPrint += ".";
+	toPrint += assigned_ip[3];
+
+	Serial.println(toPrint);
 }
 
 void MyUDP::writeLine(String line)
@@ -46,24 +69,26 @@ void MyUDP::writeLine(String line)
 	size_t len = line.length();
     size_t i = 0;
 
+	// do not attempt to send because it will block for a long time
+	if (status != 0) return;
+
     // the actual loop that enumerates the buffer
-    for (i=0; i < len/UDP_TX_PACKET_MAX_SIZE; ++i)
+    for (i=0; i < len/DOWNLINK_SINGLE_PKT_SIZE; ++i)
     {
-        memcpy(TxBuffer, line.c_str() + (i * UDP_TX_PACKET_MAX_SIZE), UDP_TX_PACKET_MAX_SIZE);
-    	Udp.beginPacket(ground_ip, port);
-		Udp.write(TxBuffer, UDP_TX_PACKET_MAX_SIZE);
+        memcpy(TxBuffer, line.c_str() + (i * DOWNLINK_SINGLE_PKT_SIZE), DOWNLINK_SINGLE_PKT_SIZE);
+    	Udp.beginPacket(ground_ip, ground_port);
+		Udp.write(TxBuffer, DOWNLINK_SINGLE_PKT_SIZE);
 		Udp.endPacket();
     }
 
     // if there is anything left over
-    if (len % UDP_TX_PACKET_MAX_SIZE)
+    if (len % DOWNLINK_SINGLE_PKT_SIZE)
 	{
-        memcpy(TxBuffer, line.c_str() + (len - len % UDP_TX_PACKET_MAX_SIZE), len % UDP_TX_PACKET_MAX_SIZE);
-    	Udp.beginPacket(ground_ip, port);
-		Udp.write(TxBuffer, len % UDP_TX_PACKET_MAX_SIZE);
+        memcpy(TxBuffer, line.c_str() + (len - len % DOWNLINK_SINGLE_PKT_SIZE), len % DOWNLINK_SINGLE_PKT_SIZE);
+    	Udp.beginPacket(ground_ip, ground_port);
+		Udp.write(TxBuffer, len % DOWNLINK_SINGLE_PKT_SIZE);
 		Udp.endPacket();
 	}
-
 }
 
 String MyUDP::tick(void)
@@ -103,7 +128,7 @@ String MyUDP::tick(void)
 			pingTime = 0;
 			ret = "Rx: ping"; 
 		}
-		else if (strcmp(RxBuffer, "setState_") == 0)
+		else if (strncmp(RxBuffer, "setState_", 9) == 0)
 		{
 			if (packetSize >= 10)
 			{
@@ -126,7 +151,7 @@ String MyUDP::tick(void)
 				ret = "Error! setState len: " + String(packetSize);
 			}
 		}
-		else if (strcmp(RxBuffer, "setValve_") == 0)
+		else if (strncmp(RxBuffer, "setValve_", 9) == 0)
 		{			
 			if (packetSize >= 12)
 			{
@@ -151,7 +176,7 @@ String MyUDP::tick(void)
 				ret = "Error! setValve len: " + String(packetSize);
 			}
 		}
-		else if (strcmp(RxBuffer, "setPump_") == 0)
+		else if (strncmp(RxBuffer, "setPump_", 8) == 0)
 		{
 			if (packetSize >= 11)
 			{
@@ -159,8 +184,9 @@ String MyUDP::tick(void)
 
 				if (sscanf(RxBuffer, "setPump_%i_%i", &val1, &val2) == 2)
 				{
-					if (((val1 == 1) || (val1 == 2)) && ((val2 > 0) && (val2 < 256)))
+					if (((val1 == 1) || (val1 == 2)) && ((val2 >= 0) && (val2 < 256)))
 					{
+						last_rx_uplink = UPLINK_SET_PUMP;
 						last_rx_val1 = val1;
 						last_rx_val2 = val2;
 						pingTime = 0;
@@ -184,7 +210,7 @@ String MyUDP::tick(void)
 				ret = "Error! setPump len: " + String(packetSize);
 			}
 		}
-		else if (strcmp(RxBuffer, "setHeating_") == 0)
+		else if (strncmp(RxBuffer, "setHeating_", 11) == 0)
 		{
 			if (packetSize >= 12)
 			{
@@ -192,8 +218,9 @@ String MyUDP::tick(void)
 
 				if (sscanf(RxBuffer, "setHeating_%i", &val1) == 1)
 				{
-					if ((val1 > 0) && (val1 < 256))
+					if ((val1 >= 0) && (val1 < 256))
 					{
+						last_rx_uplink = UPLINK_SET_HEATING;
 						last_rx_val1 = val1;
 						pingTime = 0;
 					}

@@ -62,14 +62,32 @@ void MySensors::getAltitude()
 {
 	// Pressure Based [1, 2]
 
-	altitude_1.value = pressureToAltitude(LIFTOFF_PRESSURE, pressure_1.value, temperature(1));
-	altitude_1.average = pressureToAltitude(LIFTOFF_PRESSURE, pressure_1.average, temperature(1));
-	altitude_1.isValid = pressure_1.isValid;
+	if (pressure_1.readout_status != 0)
+	{
+		altitude_1.value = pressureToAltitude(LIFTOFF_PRESSURE, pressure_1.value, temperature(1));
+		altitude_1.average = pressureToAltitude(LIFTOFF_PRESSURE, pressure_1.average, temperature(1));
+		altitude_1.isValid = pressure_1.isValid;
+	}
+	else 
+	{
+		altitude_1.value = 0;
+		altitude_1.average = 0;
+		altitude_1.isValid = 0;
+	}
 	altitude_1.timestamp = pressure_1.timestamp;
 
-	altitude_2.value = pressureToAltitude(LIFTOFF_PRESSURE, pressure_2.value, temperature(2));
-	altitude_2.average = pressureToAltitude(LIFTOFF_PRESSURE, pressure_2.average, temperature(2));
-	altitude_2.isValid = pressure_2.isValid;
+	if (pressure_1.readout_status == 0)
+	{
+		altitude_2.value = pressureToAltitude(LIFTOFF_PRESSURE, pressure_2.value, temperature(2));
+		altitude_2.average = pressureToAltitude(LIFTOFF_PRESSURE, pressure_2.average, temperature(2));
+		altitude_2.isValid = pressure_2.isValid;
+	}
+	else 
+	{
+		altitude_2.value = 0;
+		altitude_2.average = 0;
+		altitude_2.isValid = 0;
+	}
 	altitude_2.timestamp = pressure_2.timestamp;
 
 	int32_t new_altitude = GPS_main->altitude;	
@@ -117,6 +135,8 @@ void MySensors::getPressure(int sensor = 0)
 {
 	TruStabilityPressureSensor *pressure_active;
 	struct MyPressure *pressure_0;
+	float new_pressure = 0.0f;
+
 	switch (sensor)
 	{
 	case 1:
@@ -133,7 +153,17 @@ void MySensors::getPressure(int sensor = 0)
 		return;
 	}
 
-	float new_pressure = pressure_active->pressure() * 68.9476;
+	if (pressure_active->rawPressure() != 0)
+	{
+		new_pressure = pressure_active->pressure() * 68.9476;
+		pressure_0->readout_status = 1;
+	}
+	else 
+	{
+		new_pressure = 0;
+		pressure_0->readout_status = 0;
+	}
+
 	if (new_pressure != pressure_0->value && new_pressure > 0 && pressure_active->status() == 0)
 	{
 		pressure_0->value = new_pressure;

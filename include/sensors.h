@@ -43,6 +43,7 @@ struct MyPressure
 	static const int measurment_num = 30;
 	float history[measurment_num];
 	uint8_t pointer = 0;
+	uint8_t readout_status = 0;
 };
 
 class MySensors

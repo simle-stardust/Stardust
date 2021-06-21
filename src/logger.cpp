@@ -238,8 +238,7 @@ void Logger::save()
 {
 	log += "\n";
 	flash->writeLine(log);
-	// TODO: uncomment
-	//udp->writeLine(log);
+	udp->writeLine(log);
 	log = "";
 }
 
