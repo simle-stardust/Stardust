@@ -54,6 +54,8 @@ void MyDS18B20::init(OneWire oneWire)
 }
 void MyDS18B20::tick()
 {
+	if (numberOfDevices == 0) return;
+	
 	sensors->requestTemperatures();
 
 	for (int i = 0; i < numberOfDevices; i++)

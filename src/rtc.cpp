@@ -100,15 +100,15 @@ int MyRTC::getStatus()
       // we have a communications error
       // see https://www.arduino.cc/en/Reference/WireEndTransmission for
       // what the number means
-      Serial.print("RTC communications error = ");
-      Serial.println(RTC->LastError());
+      //Serial.print("RTC communications error = ");
+      //Serial.println(RTC->LastError());
       return RTC->LastError();
     }
     else
     {
       // Common Causes:
       //    1) the battery on the device is low or even missing and the power line was disconnected
-      Serial.println("RTC lost confidence in the DateTime!");
+      //Serial.println("RTC lost confidence in the DateTime!");
       return 5;
     }
   }

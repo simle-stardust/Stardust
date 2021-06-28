@@ -36,6 +36,8 @@ void MyServo::reset()
 
 void MyServo::setOpen(uint8_t servo)
 {
+	if (servo >= NB_OF_SERVOS + 1) return; 
+
 	servos[servo - 1].desired = 1;
 
 	Serial.print("Set ");
@@ -45,6 +47,8 @@ void MyServo::setOpen(uint8_t servo)
 
 void MyServo::setClosed(uint8_t servo)
 {
+	if (servo >= NB_OF_SERVOS + 1) return; 
+
 	servos[servo - 1].desired = 0;
 	Serial.print("Set ");
 	Serial.print(servo);
@@ -53,6 +57,10 @@ void MyServo::setClosed(uint8_t servo)
 
 bool MyServo::getStatus(uint8_t servo)
 {
+	if (servo >= NB_OF_SERVOS + 1) return 0;
+
+	// TODO: change to reading digital 
+	// inputs from krancowki
 	return servos[servo - 1].status;
 }
 
@@ -88,6 +96,8 @@ bool MyServo::ready()
 
 void MyServo::move(uint8_t servo)
 {
+	if (servo >= NB_OF_SERVOS + 1) return; 
+
 	pwm->setPWM(servo, 0, servos[servo - 1].desired ? SERVOMIN : SERVOMAX);
 	servos[servo - 1].status = servos[servo - 1].desired;
 	lastOperation = millis();

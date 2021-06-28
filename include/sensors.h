@@ -43,6 +43,7 @@ struct MyPressure
 	static const int measurment_num = 30;
 	float history[measurment_num];
 	uint8_t pointer = 0;
+	uint8_t readout_status = 0;
 };
 
 class MySensors
@@ -91,12 +92,14 @@ public:
 	RtcDateTime time();
 	String getTime();
 	String getDate();
+	int isDateTimeValid();
 	void getAltitude();
 	void getPressure(int sensor);
 
 	struct MyAltitude altitude(int sensor);
 	struct MyPressure pressure(int sensor);
 	float temperature(int sensor);
+	int temperatureStatus(int sensor);
 	float humidity(int sensor);
 
 	float pressureToAltitude(float seaLevel, float atmospheric, float temp);
