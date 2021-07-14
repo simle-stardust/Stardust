@@ -1,8 +1,8 @@
 #include "pwm.h"
 
-#define PUMP_1_ANALOG_PIN   15
-#define PUMP_2_ANALOG_PIN   16
-#define HEATING_ANALOG_PIN  17
+#define PUMP_1_ANALOG_PIN   44
+#define PUMP_2_ANALOG_PIN   45
+#define HEATING_ANALOG_PIN  46
 
 MyPWMs::MyPWMs()
 {

@@ -3,7 +3,7 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 
-#define NB_OF_SERVOS  7
+#define NB_OF_SERVOS  16
 
 #define SERVOMIN  300 // This is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  600 // This is the 'maximum' pulse length count (out of 4096)
@@ -12,7 +12,7 @@
 
 #define ADDRESS 0x40
 
-#define SERVO_DC A2
+#define SERVO_DC 47
 
 struct servo_status {
 	bool status = 0;

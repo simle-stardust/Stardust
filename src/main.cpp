@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "director.h"
 
-#define BUTTON_PIN 32
+#define BUTTON_PIN A2
 
 Flight flight;
 
@@ -51,7 +51,7 @@ void loop()
 			button.time *= -1;
 			Serial.print("On for ");
 			Serial.println(button.time);
-			
+
 			if (button.time > 10000)
 			{
 				flight.setPhase(0);
@@ -62,7 +62,7 @@ void loop()
 				flight.setPhase(1);
 			}
 
-			if (button.time > 500 && button.time <5000)
+			if (button.time > 500 && button.time < 5000)
 			{
 				flight.nextPhase();
 			}

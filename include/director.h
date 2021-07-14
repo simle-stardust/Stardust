@@ -7,7 +7,9 @@
 #include "pwm.h"
 #include <Adafruit_GPS.h>
 
-#define SERVO_NUM (int)8
+#define SERVO_NUM (int)7
+
+#define GPS_DEBUG
 
 #define SAMPLING_TIME 1000 // Czas próbkowania
 

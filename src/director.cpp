@@ -48,11 +48,6 @@ void Flight::tick()
 	(void)GPS_main.read();
 
 
-#ifdef GPS_DEBUG
-	// if you want to debug, this is a good time to do it!
-	if (c) Serial.print(c);
-#endif
-
 
 	if (GPS_main.newNMEAreceived()) {
 #ifdef GPS_DEBUG
