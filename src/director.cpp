@@ -62,6 +62,8 @@ void Flight::tick()
 
 	if (millis() - lastOperation > SAMPLING_TIME)
 	{
+		
+		servos.tick();
 		adc.tick();
 		
 		// Poll sensors and UDP server and save to SD card each sampling period
@@ -101,9 +103,9 @@ void Flight::tick()
 				}
 				break;
 			case UPLINK_SET_STATE:
-				if ((uplink_val1 > flight.phase) && (uplink_val1 >= 0) && (uplink_val1 <= 4))
+				if ((uplink_val1 >= 0) && (uplink_val1 <= 4))
 				{
-					nextPhase();
+					setPhase(uplink_val1);
 				}
 				break;
 			default:
@@ -213,7 +215,7 @@ void Flight::tick()
 			}
 
 
-			servos.tick();
+			//servos.tick();
 
 			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
 			// IN MANUAL MODE (LONG TIME HAS PASSED SINCE LAST PING)
@@ -256,7 +258,7 @@ void Flight::tick()
 				flight.sampling = false;
 			}
 
-			servos.tick();
+			//servos.tick();
 			
 			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
 			// IN MANUAL MODE (LONG TIME HAS PASSED SINCE LAST PING)

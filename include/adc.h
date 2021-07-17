@@ -1,10 +1,10 @@
 #pragma once
 #include <Arduino.h>
 
-#define INA1 A1
-#define INA2 A3
-#define INA3 A5
-#define INA4 A7
+#define INA1 A11
+#define INA2 A12
+#define INA3 A13
+#define INA4 A14
 
 class MyADC {
 

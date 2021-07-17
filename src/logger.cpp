@@ -20,113 +20,149 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 
 	Serial.print("RTC:			");
 		this->add(sensors->getDate());
+		this->add_udp(sensors->getDate());
 		Serial.print(",	");
 		this->add(sensors->getTime());
+		this->add_udp(sensors->getTime());
 		Serial.print(",		");
 		this->add(sensors->temperature(0));
+		this->add_udp(sensors->temperature(0));
 		Serial.print(" *C, errcode: ");
 		this->add(sensors->isDateTimeValid());
+		this->add_udp(sensors->isDateTimeValid());
 		Serial.println(";");
 
 	Serial.print("Pressure [main]:	");
 		struct MyPressure pressure = sensors->pressure(1);
 		this->add(pressure.value);
+		this->add_udp(pressure.value);
 		Serial.print("hpa	[avg:");
 		this->add(pressure.average);
+		this->add_udp(pressure.average);
 		Serial.print("hpa]	");
 		this->add(sensors->temperature(1));
+		this->add_udp(sensors->temperature(1));
 		Serial.print(" *C	true:");
 		this->add(pressure.isValid);
+		this->add_udp(pressure.isValid);
 		Serial.println(";");
 
 	Serial.print("Pressure [sens]:	");
 		pressure = sensors->pressure(2);
 		this->add(pressure.value);
+		this->add_udp(pressure.value);
 		Serial.print("hpa	[avg:");
 		this->add(pressure.average);
+		this->add_udp(pressure.average);
 		Serial.print("hpa]	");
 		this->add(sensors->temperature(2));
+		this->add_udp(sensors->temperature(2));
 		Serial.print(" *C	true:");
 		this->add(pressure.isValid);
+		this->add_udp(pressure.isValid);
 		Serial.println(";");
 
 	Serial.print("Altitude [GPS]:		");
 		struct MyAltitude altitude = sensors->altitude(0);
 		this->add(altitude.value);
+		this->add_udp(altitude.value);
 		Serial.print("m		[avg:");
 		this->add(altitude.average);
+		this->add_udp(altitude.average);
 		Serial.print("m]	true:");
 		this->add(altitude.isValid);
+		this->add_udp(altitude.isValid);
 		Serial.println(";");
 
 	Serial.print("Altitude [press_sens]:	");
 		altitude = sensors->altitude(2);
 		this->add(altitude.value);
+		this->add_udp(altitude.value);
 		Serial.print("m		[avg:");
 		this->add(altitude.average);
+		this->add_udp(altitude.average);
 		Serial.print("m]	true:");
 		this->add(altitude.isValid);
+		this->add_udp(altitude.isValid);
 		Serial.println(";");
 
 	Serial.print("Altitude [press_main]:	");
 		altitude = sensors->altitude(1);
 		this->add(altitude.value);
+		this->add_udp(altitude.value);
 		Serial.print("m		[avg:");
 		this->add(altitude.average);
+		this->add_udp(altitude.average);
 		Serial.print("m]	true:");
 		this->add(altitude.isValid);
+		this->add_udp(altitude.isValid);
 		Serial.println(";");
 
 	Serial.print("DHT22 main:		");
 		this->add(sensors->temperature(3));
+		this->add_udp(sensors->temperature(3));
 		Serial.print(" *C,	");
 		this->add(sensors->humidity(3));
+		this->add_udp(sensors->humidity(3));
 		Serial.print("RH%,	errCode: ");
 		this->add(sensors->temperatureStatus(3));
+		this->add_udp(sensors->temperatureStatus(3));
 		Serial.println(";");
 
 	Serial.print("DHT22 sens:		");
 		this->add(sensors->temperature(4));
+		this->add_udp(sensors->temperature(4));
 		Serial.print(" *C,	");
 		this->add(sensors->humidity(4));
+		this->add_udp(sensors->humidity(4));
 		Serial.print(" RH%,	errCode: ");
 		this->add(sensors->temperatureStatus(4));
+		this->add_udp(sensors->temperatureStatus(4));
 		Serial.println(";");
 
-	// Serial.print("DHT22 mech:		");
-	//	this->add(sensors->temperature(5));
-	//	Serial.print(" *C,	");
-	//	this->add(sensors->humidity(5));
-	//	Serial.print(" RH%,	errCode: ");
-	//	this->add(sensors->temperatureStatus(5));
-	//	Serial.println(";");
+	 Serial.print("DHT22 mech:		");
+		this->add(sensors->temperature(5));
+		this->add_udp(sensors->temperature(5));
+		Serial.print(" *C,	");
+		this->add(sensors->humidity(5));
+		this->add_udp(sensors->humidity(5));
+		Serial.print(" RH%,	errCode: ");
+		this->add(sensors->temperatureStatus(5));
+		this->add_udp(sensors->temperatureStatus(5));
+		Serial.println(";");
 
 	for (uint8_t i = 10; i < 20; i++)
 	{
-		//  Serial.print("DS18B20 main["); 
-		//  Serial.print(i - 10);
-		//  Serial.print("]:				");
-		// 	this->add(sensors->temperature(i));
-		// 	Serial.println(" *C;");
+		  Serial.print("DS18B20 main["); 
+		  Serial.print(i - 10);
+		  Serial.print("]:				");
+			this->add(sensors->temperature(i));
+			this->add_udp(sensors->temperature(i));
+		 	Serial.println(" *C;");
 	}
 
 	for (uint8_t i = 20; i < 30; i++)
 	{
-		//  Serial.print("DS18B20 sens["); 
-		//  Serial.print(i - 20);
-		//  Serial.print("]:				");
-		// 	this->add(sensors->temperature(i));
-		// 	Serial.println(" *C;");
+		  Serial.print("DS18B20 sens["); 
+		  Serial.print(i - 20);
+		  Serial.print("]:				");
+		 	this->add(sensors->temperature(i));
+		 	this->add_udp(sensors->temperature(i));
+		 	Serial.println(" *C;");
 	}
 
 	Serial.print("Pump 1: ");
 	this->add(pwms->read(PWM_PUMP_1));
+	this->add_udp(pwms->read(PWM_PUMP_1));
 	Serial.print(",	Pump 2: ");
 	this->add(pwms->read(PWM_PUMP_2));
+	this->add_udp(pwms->read(PWM_PUMP_2));
 	Serial.print(",	Heaters: ");
 	this->add(pwms->read(PWM_HEATING));
+	this->add_udp(pwms->read(PWM_PUMP_2));
 	Serial.print(",	Phase:		");
 	this->add(phase);
+	this->add_udp(phase);
 	Serial.println(";");
 
 	for (uint8_t i = 0; i < NB_OF_SERVOS; i++)
@@ -136,18 +172,22 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 		Serial.print(": ");
 
 		this->add(servos->getStatus(i + 1));
+		this->add_udp(servos->getStatus(i + 1));
 		Serial.print(",  ");
 	}
 	Serial.println("");
 
 	Serial.print("ADC [1]:	");
 		this->add(adc->getADC(0));
+		this->add_udp(adc->getADC(0));
 		Serial.println();
 	Serial.print("ADC [2]:	");
 		this->add(adc->getADC(1));
+		this->add_udp(adc->getADC(1));
 		Serial.println();
 	Serial.print("ADC [3]:	");
 		this->add(adc->getADC(2));
+		this->add_udp(adc->getADC(2));
 		Serial.println();
 	
 	// Current SED has only 3 values (2 x pumps and heating system)
@@ -161,6 +201,7 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 
 	Serial.print("Time since last ping: ");
 		this->add(udp->timeSinceLastPing());
+		this->add_udp(udp->timeSinceLastPing());
 		Serial.println();
 
 	this->save();
@@ -203,6 +244,31 @@ void Logger::add(int32_t value)
 	log += String(value) + ",";
 }
 
+void Logger::add_udp(String value)
+{
+	log_udp += value + ",";
+}
+
+void Logger::add_udp(float value)
+{
+	log_udp += String(value) + ",";
+}
+
+void Logger::add_udp(uint32_t value)
+{
+	log_udp += String(value) + ",";
+}
+
+void Logger::add_udp(int value)
+{
+	log_udp += String(value) + ",";
+}
+
+void Logger::add_udp(int32_t value)
+{
+	log_udp += String(value) + ",";
+}
+
 void Logger::add(reason_t value)
 {
 	switch (value)
@@ -237,9 +303,11 @@ void Logger::add(reason_t value)
 void Logger::save()
 {
 	log += "\n";
+	log_udp += "\n";
 	flash->writeLine(log);
-	udp->writeLine(log);
+	udp->writeLine(log_udp);
 	log = "";
+	log_udp = "";
 }
 
 void Logger::write_to_sd(String value)

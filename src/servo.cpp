@@ -3,6 +3,7 @@
 MyServo::MyServo(unsigned int number)
 {
 	pwm = new Adafruit_PWMServoDriver(ADDRESS);
+	gpio_expander = new pca9555(GPIO_EXP_ADDRESS);//instance
 	servoNumber = number;
 	lastOperation = millis();
 };
@@ -13,11 +14,16 @@ void MyServo::init()
 	Serial.println(" INITIALIZING SERVOS ");
 
 	pinMode(SERVO_DC, OUTPUT);
-	digitalWrite(SERVO_DC, HIGH);
+	digitalWrite(SERVO_DC, LOW);
 	delay(100);
 	pwm->begin();
 	pwm->setOscillatorFrequency(27000000);
 	pwm->setPWMFreq(SERVO_FREQ);
+
+	
+	gpio_expander->begin();
+	gpio_expander->gpioPinMode(INPUT);
+	//gpio_expander->gpioPinMode(OUTPUT);
 }
 
 void MyServo::reset()
@@ -28,10 +34,10 @@ void MyServo::reset()
 		pwm->setPWM(i, 0, 0);
 	}
 
-	digitalWrite(SERVO_DC, LOW);
-	Serial.println(" POWER RESET ");
-	delay(500);
 	digitalWrite(SERVO_DC, HIGH);
+	Serial.println(" POWER RESET ");
+	delay(1000);
+	digitalWrite(SERVO_DC, LOW);
 }
 
 void MyServo::setOpen(uint8_t servo)
@@ -59,6 +65,13 @@ bool MyServo::getStatus(uint8_t servo)
 {
 	if (servo >= NB_OF_SERVOS + 1) return 0;
 
+	//gpio_expander->gpioPort(0);
+	//Serial.print(gpio_expander->readGpioPort(), HEX);
+	//Serial.print(" ");
+
+	
+    //mcp.gpioDigitalWrite(i, LOW);
+
 	// TODO: change to reading digital 
 	// inputs from krancowki
 	return servos[servo - 1].status;
@@ -66,22 +79,33 @@ bool MyServo::getStatus(uint8_t servo)
 
 void MyServo::tick()
 {
+
 	if (servo_pointer > servoNumber - 1)
 		servo_pointer = 0;
-	if (millis() - lastOperation > SERVO_SAMPLING_TIME)
+
+	// if (millis() - lastOperation > SERVO_SAMPLING_TIME)
+	// {
+
+	Serial.println("Ticking tack toe");
+	if (servos[servo_pointer].desired != servos[servo_pointer].status)
 	{
-		reset();
-		if (servos[servo_pointer].desired != servos[servo_pointer].status)
-		{
-			move(servo_pointer + 1);
-			servo_pointer++;
-		}
-		else if (!ready())
-		{
-			servo_pointer++;
-			tick();
-		}
+		move(servo_pointer + 1);
+		
 	}
+
+	servo_pointer++;
+	// 	reset();
+	// 	if (servos[servo_pointer].desired != servos[servo_pointer].status)
+	// 	{
+	// 		move(servo_pointer + 1);
+	// 		servo_pointer++;
+	// 	}
+	// 	else if (!ready())
+	// 	{
+	// 		servo_pointer++;
+	// 		tick();	
+	// 	}
+	//}
 }
 
 bool MyServo::ready()
@@ -97,10 +121,11 @@ bool MyServo::ready()
 void MyServo::move(uint8_t servo)
 {
 	if (servo >= NB_OF_SERVOS + 1) return; 
-
+	Serial.println(servo);
 	pwm->setPWM(servo, 0, servos[servo - 1].desired ? SERVOMIN : SERVOMAX);
+	delay(2000);
 	servos[servo - 1].status = servos[servo - 1].desired;
-	lastOperation = millis();
+	//lastOperation = millis();
 	Serial.print(servos[servo - 1].desired ? "Opened " : "Closed ");
 	Serial.println(servo);
 	

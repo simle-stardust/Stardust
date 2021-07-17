@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
+#include <pca9555.h>
 
 #define NB_OF_SERVOS  16
 
@@ -11,6 +12,7 @@
 #define SERVO_SAMPLING_TIME 2000
 
 #define ADDRESS 0x40
+#define GPIO_EXP_ADDRESS 0x20
 
 #define SERVO_DC 47
 
@@ -22,6 +24,8 @@ struct servo_status {
 class MyServo {
 private:
 	Adafruit_PWMServoDriver *pwm;
+	
+	pca9555 *gpio_expander;
 
 	unsigned int servoNumber = 0;
 	struct servo_status servos[NB_OF_SERVOS];

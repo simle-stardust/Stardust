@@ -2,20 +2,20 @@
 
 // Enter a MAC address and IP address for your controller below.
 // The IP address will be dependent on your local network:
-byte mac[6] = {0xA8, 0x61, 0x0A, 0xAE, 0x64, 0x31};
+byte mac[6] = {0xA8, 0x61, 0x0A, 0xAE, 0x82, 0xA6};
 
 #define HACKERSPACE_TESTING
 
 #ifdef HACKERSPACE_TESTING
 	// actually it can be assigned to us automatically
 	// by DHCP, at least in my home //Szymon
-	IPAddress our_ip(192, 168, 88, 237);
+	IPAddress our_ip(192, 168, 1, 105);
 	// IP address we will be sending data to
-	IPAddress ground_ip(192, 168, 0, 108);
+	IPAddress ground_ip(192, 168, 1, 100);
 	// port on which we will be listening for data
 	unsigned long our_port = 2137;
 	// port we are sending data to
-	unsigned long ground_port = 51299;
+	unsigned long ground_port = 62398;
 #else
 	// TO DO: change to actual addresses used in BEXUS
 	IPAddress ip(192, 168, 1, 3);
@@ -34,18 +34,21 @@ void MyUDP::init(void)
 	// start the Ethernet and UDP:
   	Ethernet.init(10);  // Most Arduino shields
 
+	//int ret = Ethernet.begin(mac, 10000, 10000);
+
+	Ethernet.begin(mac, our_ip);
 
 	// TODO: Change init function if using static config
-	if (Ethernet.begin(mac, 10000, 10000) != 1) // timeouts for DNS
-	{
-		status = -1;
-		Serial.println("UDP: error");
-		return;
-	}
+	//if (ret != 1) // timeouts for DHCP
+	//{
+	//	status = -1;
+	//	Serial.println("UDP: error:  " + String(ret));
+	//	return;
+	//}
 	if (Udp.begin(our_port) != 1)
 	{
 		status = -1;
-		Serial.println("UDP: error");
+		Serial.println("UDP: error2");
 		return;
 	}
 	status = 0;
@@ -71,6 +74,9 @@ void MyUDP::writeLine(String line)
 
 	// do not attempt to send because it will block for a long time
 	if (status != 0) return;
+
+	Serial.print("Writing to UDP: ");
+	Serial.println(line);
 
     // the actual loop that enumerates the buffer
     for (i=0; i < len/DOWNLINK_SINGLE_PKT_SIZE; ++i)
@@ -155,21 +161,26 @@ String MyUDP::tick(void)
 		{			
 			if (packetSize >= 12)
 			{
-				if ((RxBuffer[9] >= '1') && (RxBuffer[9] <= '7') &&
-					((RxBuffer[11] == '0') || (RxBuffer[11] == '1')))
+				int val1, val2;
+
+				if (sscanf(RxBuffer, "setValve_%i_%i", &val1, &val2) == 2)
 				{
-					last_rx_uplink = UPLINK_SET_VALVE;
-					last_rx_val1 = RxBuffer[9] - '0';
-					last_rx_val2 = RxBuffer[11] - '0';
-					pingTime = 0;
-				}
-				else 
-				{
-					last_rx_val1 = LAST_RX_VAL_NONE;
-					last_rx_val2 = LAST_RX_VAL_NONE;
+					if ((val1 >= 1) && (val1 <= 14) &&
+						((val2 == 0) || (val2 == 1)))
+					{
+						last_rx_uplink = UPLINK_SET_VALVE;
+						last_rx_val1 = val1;
+						last_rx_val2 = val2;
+						pingTime = 0;
+					}
+					else 
+					{
+						last_rx_val1 = LAST_RX_VAL_NONE;
+						last_rx_val2 = LAST_RX_VAL_NONE;
+					}
 				}
 
-				ret = "RX: setValve: " + String(last_rx_val1) + String(last_rx_val2);
+				ret = "RX: setValve: " + String(last_rx_val1) + " " + String(last_rx_val2);
 			}
 			else 
 			{

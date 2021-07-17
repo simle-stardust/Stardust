@@ -7,7 +7,7 @@
 #include "pwm.h"
 #include <Adafruit_GPS.h>
 
-#define SERVO_NUM (int)7
+#define SERVO_NUM (int)15
 
 #define GPS_DEBUG
 
