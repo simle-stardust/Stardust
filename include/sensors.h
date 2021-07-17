@@ -8,7 +8,7 @@
 
 // Pinout definition
 #define DHT22_main 36
-#define DHT22_mech 45
+#define DHT22_mech 34
 #define DHT22_sens 35
 
 #define ONE_WIRE_main 28
