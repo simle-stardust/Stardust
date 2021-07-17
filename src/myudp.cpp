@@ -267,6 +267,8 @@ uint32_t MyUDP::timeSinceLastPing()
 
 uplink_t MyUDP::getLastUplink(uint8_t* val1, uint8_t* val2)
 {
+	uplink_t retVal = last_rx_uplink;
+
 	if (val1 != NULL)
 	{
 		*val1 = last_rx_val1;
@@ -277,5 +279,7 @@ uplink_t MyUDP::getLastUplink(uint8_t* val1, uint8_t* val2)
 	}
 
 	last_rx_val1 = last_rx_val2 = LAST_RX_VAL_NONE;
-	return last_rx_uplink;
+	last_rx_uplink = UPLINK_NONE;
+
+	return retVal;
 }
