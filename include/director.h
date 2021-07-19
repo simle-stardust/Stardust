@@ -9,7 +9,7 @@
 
 #define SERVO_NUM (int)15
 
-#define GPS_DEBUG
+//#define GPS_DEBUG
 
 #define SAMPLING_TIME 1000 // Czas próbkowania
 

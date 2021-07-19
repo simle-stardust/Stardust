@@ -1,11 +1,22 @@
 #include "servo.h"
 
+// pin  / servo_pointer value (index in array)  / setValve telecommand value
+// J8 - 13 - 14
+// J9 - 12 - 13
+// J10 - 11 - 12
+// J11 - 10 - 11
+// J12 - 9 - 10
+// J13 - 8 - 9
+// J14 - 7 - 8
+
 MyServo::MyServo(unsigned int number)
 {
 	pwm = new Adafruit_PWMServoDriver(ADDRESS);
 	gpio_expander = new pca9555(GPIO_EXP_ADDRESS);//instance
 	servoNumber = number;
 	lastOperation = millis();
+	state = SERVO_IDLE;
+	servo_pointer = 0;
 };
 
 void MyServo::init()
@@ -14,16 +25,18 @@ void MyServo::init()
 	Serial.println(" INITIALIZING SERVOS ");
 
 	pinMode(SERVO_DC, OUTPUT);
-	digitalWrite(SERVO_DC, LOW);
+
 	delay(100);
 	pwm->begin();
 	pwm->setOscillatorFrequency(27000000);
 	pwm->setPWMFreq(SERVO_FREQ);
 
-	
 	gpio_expander->begin();
 	gpio_expander->gpioPinMode(INPUT);
 	//gpio_expander->gpioPinMode(OUTPUT);
+
+	state = SERVO_IDLE;
+	servo_pointer = 0;
 }
 
 void MyServo::reset()
@@ -79,33 +92,53 @@ bool MyServo::getStatus(uint8_t servo)
 
 void MyServo::tick()
 {
-
 	if (servo_pointer > servoNumber - 1)
 		servo_pointer = 0;
 
-	// if (millis() - lastOperation > SERVO_SAMPLING_TIME)
-	// {
-
-	Serial.println("Ticking tack toe");
-	if (servos[servo_pointer].desired != servos[servo_pointer].status)
+	switch (state)
 	{
-		move(servo_pointer + 1);
-		
-	}
+		case SERVO_IDLE:
+			for (uint8_t i = 0; i <= servoNumber; ++i)
+			{
+				if (servos[servo_pointer].desired != servos[servo_pointer].status)
+				{
+					for (uint8_t j = 0; j <= servoNumber; ++j)
+					{
+						pwm->setPWM(j, 0, 0);
+					}
+					digitalWrite(SERVO_DC, HIGH);
+					state = SERVO_RESETTING;
+					lastOperation = millis();
+					break;
+				}
+				else 
+				{
+					servo_pointer++;
+				}
+			}
+			break;
 
-	servo_pointer++;
-	// 	reset();
-	// 	if (servos[servo_pointer].desired != servos[servo_pointer].status)
-	// 	{
-	// 		move(servo_pointer + 1);
-	// 		servo_pointer++;
-	// 	}
-	// 	else if (!ready())
-	// 	{
-	// 		servo_pointer++;
-	// 		tick();	
-	// 	}
-	//}
+		case SERVO_RESETTING:
+			if (millis() - lastOperation > SERVO_RESET_TIME)
+			{
+				digitalWrite(SERVO_DC, LOW);
+				pwm->setPWM(servo_pointer + 1, 0, servos[servo_pointer].desired ? SERVOMIN : SERVOMAX);
+				state = SERVO_MOVING;
+				lastOperation = millis();
+			}
+			break;
+
+		case SERVO_MOVING:
+			if (millis() - lastOperation > SERVO_SAMPLING_TIME)
+			{
+				state = SERVO_IDLE;
+				servos[servo_pointer].status = servos[servo_pointer].desired;
+				Serial.print(servos[servo_pointer].desired ? "Opened " : "Closed ");
+			}
+			break;
+		default:
+			break;
+	}
 }
 
 bool MyServo::ready()
@@ -116,19 +149,6 @@ bool MyServo::ready()
 			return 0;
 	}
 	return 1;
-}
-
-void MyServo::move(uint8_t servo)
-{
-	if (servo >= NB_OF_SERVOS + 1) return; 
-	Serial.println(servo);
-	pwm->setPWM(servo, 0, servos[servo - 1].desired ? SERVOMIN : SERVOMAX);
-	delay(2000);
-	servos[servo - 1].status = servos[servo - 1].desired;
-	//lastOperation = millis();
-	Serial.print(servos[servo - 1].desired ? "Opened " : "Closed ");
-	Serial.println(servo);
-	
 }
 
 void MyServo::openSequence()
