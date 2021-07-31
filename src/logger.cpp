@@ -302,12 +302,15 @@ void Logger::add(reason_t value)
 
 void Logger::save()
 {
+	log_udp.remove(log_udp.length() - 1, 1);
+	log_udp += ";\n";
 	log += "\n";
-	log_udp += "\n";
+
 	flash->writeLine(log);
 	udp->writeLine(log_udp);
+
 	log = "";
-	log_udp = "";
+	log_udp = "@";
 }
 
 void Logger::write_to_sd(String value)
