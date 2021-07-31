@@ -8,8 +8,7 @@ void MySensors::init(MyRTC *_rtc, Adafruit_GPS* _GPS_main)
 {
 	rtc = _rtc;
 	GPS_main = _GPS_main;
-	temp_main.init(onewire_main);
-	temp_sens.init(onewire_sens);
+	//temp_main.init(onewire_main);
 	pressure_main.begin();
 	pressure_sens.begin();
 	GPS_main->begin(9600);
@@ -27,8 +26,7 @@ void MySensors::readSensors()
 	rtc->getStatus();
 
 	// Temperature 
-	temp_sens.tick();
-	temp_main.tick();
+	//temp_main.tick();
 
 	// Pressure
 	getPressure(1);
@@ -240,10 +238,8 @@ float MySensors::temperature(int sensor = 0)
 		return dht_sens.getTemperature();
 	case 5:
 		return dht_mech.getTemperature();
-	case 10 ... 19:
-		return temp_main.getTemperature(sensor - 10);
-	case 20 ... 29:
-		return temp_sens.getTemperature(sensor - 20);
+	// case 10 ... 19:
+	// 	return temp_main.getTemperature(sensor - 10);
 	default:
 		return -1;
 	}

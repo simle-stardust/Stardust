@@ -63,7 +63,7 @@ void Flight::tick()
 	if (millis() - lastOperation > SAMPLING_TIME)
 	{
 		
-		servos.tick();
+		//servos.tick();
 		adc.tick();
 		
 		// Poll sensors and UDP server and save to SD card each sampling period
@@ -215,7 +215,7 @@ void Flight::tick()
 			}
 
 
-			//servos.tick();
+			servos.tick();
 
 			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
 			// IN MANUAL MODE (LONG TIME HAS PASSED SINCE LAST PING)
@@ -258,7 +258,7 @@ void Flight::tick()
 				flight.sampling = false;
 			}
 
-			//servos.tick();
+			servos.tick();
 			
 			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
 			// IN MANUAL MODE (LONG TIME HAS PASSED SINCE LAST PING)

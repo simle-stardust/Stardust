@@ -15,7 +15,7 @@ byte mac[6] = {0xA8, 0x61, 0x0A, 0xAE, 0x82, 0xA6};
 	// port on which we will be listening for data
 	unsigned long our_port = 2137;
 	// port we are sending data to
-	unsigned long ground_port = 62398;
+	unsigned long ground_port = 64341;
 #else
 	// TO DO: change to actual addresses used in BEXUS
 	IPAddress ip(192, 168, 1, 3);
@@ -102,6 +102,9 @@ String MyUDP::tick(void)
 	String ret = "";
 
 	pingTime++;
+
+	// do not attempt to rx because it will block for a long time
+	if (status != 0) return ret;
 
 	// if there's data available, read a packet
 	int packetSize = Udp.parsePacket();

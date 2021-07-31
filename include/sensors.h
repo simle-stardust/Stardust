@@ -62,7 +62,6 @@ private:
 
 	// temperature
 	MyDS18B20 temp_main;
-	MyDS18B20 temp_sens;
 
 	// pressure
 	TruStabilityPressureSensor pressure_main;

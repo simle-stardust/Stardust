@@ -9,6 +9,7 @@
 #define SERVOMIN  300 // This is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  600 // This is the 'maximum' pulse length count (out of 4096)
 #define SERVO_FREQ 60
+#define SERVO_RESET_TIME    1000
 #define SERVO_SAMPLING_TIME 2000
 
 #define ADDRESS 0x40
@@ -21,6 +22,13 @@ struct servo_status {
 	bool desired = 0;
 };
 
+typedef enum
+{
+	SERVO_IDLE,
+	SERVO_RESETTING,
+	SERVO_MOVING,
+} ServoState_t;
+
 class MyServo {
 private:
 	Adafruit_PWMServoDriver *pwm;
@@ -32,9 +40,9 @@ private:
 
 	uint8_t servo_pointer = 0;
 
+	ServoState_t state = SERVO_IDLE;
+
 	unsigned long lastOperation = 0;
-	
-	void move(uint8_t servo);
 
 public:
 	MyServo(unsigned int number);
