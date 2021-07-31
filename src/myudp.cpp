@@ -69,14 +69,19 @@ void MyUDP::init(void)
 
 void MyUDP::writeLine(String line)
 { 
-	size_t len = line.length();
+	size_t len;
     size_t i = 0;
 
 	// do not attempt to send because it will block for a long time
 	if (status != 0) return;
 
-	Serial.print("Writing to UDP: ");
-	Serial.println(line);
+	// remove trailing comma ", "
+	line = line.substring(0, line.length() - 2);
+	line = "@" + line + ";";
+	len = line.length();
+
+	//Serial.print("Writing to UDP: ");
+	//Serial.println(line);
 
     // the actual loop that enumerates the buffer
     for (i=0; i < len/DOWNLINK_SINGLE_PKT_SIZE; ++i)

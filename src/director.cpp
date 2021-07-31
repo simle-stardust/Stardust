@@ -1,7 +1,7 @@
 #include "director.h"
 #include <EEPROM.h>
 
-Flight::Flight() : servos(SERVO_NUM), GPS_main(&Serial3)
+Flight::Flight() : servos(), GPS_main(&Serial3)
 {
 }
 

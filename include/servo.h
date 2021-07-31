@@ -4,7 +4,7 @@
 #include <Adafruit_PWMServoDriver.h>
 #include <pca9555.h>
 
-#define NB_OF_SERVOS  16
+#define NB_OF_SERVOS  7
 
 #define SERVOMIN  300 // This is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  600 // This is the 'maximum' pulse length count (out of 4096)
@@ -20,6 +20,7 @@
 struct servo_status {
 	bool status = 0;
 	bool desired = 0;
+	uint8_t PWM_driver_index;
 };
 
 typedef enum
@@ -45,7 +46,7 @@ private:
 	unsigned long lastOperation = 0;
 
 public:
-	MyServo(unsigned int number);
+	MyServo();
 	void init();
 	void tick();
 	void reset();
