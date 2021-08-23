@@ -18,12 +18,19 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 
 	sensors->readSensors();
 
+	log_udp_len = 0;
+	RtcDateTime date = sensors->time();
+
 	Serial.print("RTC:			");
 		this->add(sensors->getDate());
-		this->add_udp(sensors->getDate());
+		this->add_udp(date.Year());
+		this->add_udp(date.Month());
+		this->add_udp(date.Day());
+		this->add_udp(date.Hour());
+		this->add_udp(date.Minute());
+		this->add_udp(date.Second());
 		Serial.print(",	");
 		this->add(sensors->getTime());
-		this->add_udp(sensors->getTime());
 		Serial.print(",		");
 		this->add(sensors->temperature(0));
 		this->add_udp(sensors->temperature(0));
@@ -44,7 +51,7 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 		this->add_udp(sensors->temperature(1));
 		Serial.print(" *C	true:");
 		this->add(pressure.isValid);
-		this->add_udp(pressure.isValid);
+		this->add_udp((uint8_t)pressure.isValid);
 		Serial.println(";");
 
 	Serial.print("Pressure [sens]:	");
@@ -59,7 +66,7 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 		this->add_udp(sensors->temperature(2));
 		Serial.print(" *C	true:");
 		this->add(pressure.isValid);
-		this->add_udp(pressure.isValid);
+		this->add_udp((uint8_t)pressure.isValid);
 		Serial.println(";");
 
 	Serial.print("Altitude [GPS]:		");
@@ -71,7 +78,7 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 		this->add_udp(altitude.average);
 		Serial.print("m]	true:");
 		this->add(altitude.isValid);
-		this->add_udp(altitude.isValid);
+		this->add_udp((uint8_t)altitude.isValid);
 		Serial.println(";");
 
 	Serial.print("Altitude [press_sens]:	");
@@ -83,7 +90,7 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 		this->add_udp(altitude.average);
 		Serial.print("m]	true:");
 		this->add(altitude.isValid);
-		this->add_udp(altitude.isValid);
+		this->add_udp((uint8_t)altitude.isValid);
 		Serial.println(";");
 
 	Serial.print("Altitude [press_main]:	");
@@ -95,7 +102,7 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 		this->add_udp(altitude.average);
 		Serial.print("m]	true:");
 		this->add(altitude.isValid);
-		this->add_udp(altitude.isValid);
+		this->add_udp((uint8_t)altitude.isValid);
 		Serial.println(";");
 
 	Serial.print("DHT22 main:		");
@@ -133,22 +140,22 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 
 	for (uint8_t i = 10; i < 20; i++)
 	{
-		  Serial.print("DS18B20 main["); 
-		  Serial.print(i - 10);
-		  Serial.print("]:				");
+		  //Serial.print("DS18B20 main["); 
+		  //Serial.print(i - 10);
+		  //Serial.print("]:				");
 			this->add(sensors->temperature(i));
 			this->add_udp(sensors->temperature(i));
-		 	Serial.println(" *C;");
+		 	//Serial.println(" *C;");
 	}
 
 	for (uint8_t i = 20; i < 30; i++)
 	{
-		  Serial.print("DS18B20 sens["); 
-		  Serial.print(i - 20);
-		  Serial.print("]:				");
+		  //Serial.print("DS18B20 sens["); 
+		  //Serial.print(i - 20);
+		  //Serial.print("]:				");
 		 	this->add(sensors->temperature(i));
 		 	this->add_udp(sensors->temperature(i));
-		 	Serial.println(" *C;");
+		 	//Serial.println(" *C;");
 	}
 
 	Serial.print("Pump 1: ");
@@ -172,7 +179,7 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 		Serial.print(": ");
 
 		this->add(servos->getStatus(i + 1));
-		this->add_udp(servos->getStatus(i + 1));
+		this->add_udp((uint8_t)servos->getStatus(i + 1));
 		Serial.print(",  ");
 	}
 	Serial.println("");
@@ -244,29 +251,51 @@ void Logger::add(int32_t value)
 	log += String(value) + ",";
 }
 
-void Logger::add_udp(String value)
+void Logger::add_udp(uint8_t value)
 {
-	log_udp += value + ",";
+	log_udp[log_udp_len++] = value;
 }
 
-void Logger::add_udp(float value)
+void Logger::add_udp(uint16_t value)
 {
-	log_udp += String(value) + ",";
+	log_udp[log_udp_len++] = (uint8_t)value;
+	log_udp[log_udp_len++] = (uint8_t)(value >> 8);
 }
 
 void Logger::add_udp(uint32_t value)
 {
-	log_udp += String(value) + ",";
+	log_udp[log_udp_len++] = (uint8_t)value;
+	log_udp[log_udp_len++] = (uint8_t)(value >> 8);
+	log_udp[log_udp_len++] = (uint8_t)(value >> 16);
+	log_udp[log_udp_len++] = (uint8_t)(value >> 24);
 }
 
-void Logger::add_udp(int value)
+void Logger::add_udp(int8_t value)
 {
-	log_udp += String(value) + ",";
+	log_udp[log_udp_len++] = (uint8_t)value;
+}
+
+void Logger::add_udp(int16_t value)
+{
+	log_udp[log_udp_len++] = (uint8_t)value;
+	log_udp[log_udp_len++] = (uint8_t)((uint8_t)value >> 8);
 }
 
 void Logger::add_udp(int32_t value)
 {
-	log_udp += String(value) + ",";
+	log_udp[log_udp_len++] = (uint8_t)value;
+	log_udp[log_udp_len++] = (uint8_t)((uint32_t)value >> 8);
+	log_udp[log_udp_len++] = (uint8_t)((uint32_t)value >> 16);
+	log_udp[log_udp_len++] = (uint8_t)((uint32_t)value >> 24);
+}
+
+void Logger::add_udp(float value)
+{
+	int32_t val_multiplied = (int32_t)(value * 100.0f);
+	log_udp[log_udp_len++] = (uint8_t)val_multiplied;
+	log_udp[log_udp_len++] = (uint8_t)((uint32_t)val_multiplied >> 8);
+	log_udp[log_udp_len++] = (uint8_t)((uint32_t)val_multiplied >> 16);
+	log_udp[log_udp_len++] = (uint8_t)((uint32_t)val_multiplied >> 24);
 }
 
 void Logger::add(reason_t value)
@@ -302,15 +331,13 @@ void Logger::add(reason_t value)
 
 void Logger::save()
 {
-	log_udp.remove(log_udp.length() - 1, 1);
-	log_udp += ";\n";
 	log += "\n";
 
+	//Serial.println("UDP_LEN 666 = " + String(log_udp_len));
 	flash->writeLine(log);
-	udp->writeLine(log_udp);
+	udp->writeLine(&log_udp[0], log_udp_len);
 
 	log = "";
-	log_udp = "@";
 }
 
 void Logger::write_to_sd(String value)

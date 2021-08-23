@@ -9,6 +9,58 @@
 // J13 - 8 - 9
 // J14 - 7 - 8
 
+#define SERVOMIN  300 // This is the 'minimum' pulse length count (out of 4096)
+#define SERVOMAX  600 // This is the 'maximum' pulse length count (out of 4096)
+
+
+
+const servo_configuration_t servos_configuration[NB_OF_SERVOS] = 
+{
+	{
+		.name = "J14",
+		.open_position = SERVOMIN,
+		.close_position = SERVOMAX,
+		.PWM_driver_index = 8
+	},
+	{
+		.name = "J13",
+		.open_position = SERVOMIN,
+		.close_position = SERVOMAX,
+		.PWM_driver_index = 9
+	},
+	{
+		.name = "J12",
+		.open_position = SERVOMIN,
+		.close_position = SERVOMAX,
+		.PWM_driver_index = 10
+	},
+	{
+		.name = "J11",
+		.open_position = SERVOMIN,
+		.close_position = SERVOMAX,
+		.PWM_driver_index = 11
+	},
+	{
+		.name = "J10",
+		.open_position = SERVOMIN,
+		.close_position = SERVOMAX,
+		.PWM_driver_index = 12
+	},
+	{
+		.name = "J9",
+		.open_position = SERVOMIN,
+		.close_position = SERVOMAX,
+		.PWM_driver_index = 13
+	},
+	{
+		.name = "J8",
+		.open_position = SERVOMIN,
+		.close_position = SERVOMAX,
+		.PWM_driver_index = 14
+	},
+};
+
+
 MyServo::MyServo()
 {
 	pwm = new Adafruit_PWMServoDriver(ADDRESS);
@@ -16,7 +68,7 @@ MyServo::MyServo()
 
 	for (uint8_t i = 0; i < NB_OF_SERVOS; i++)
 	{
-		servos[i].PWM_driver_index = 8 + i;
+		memcpy(&servos[i].config, &servos_configuration[i], sizeof(servo_configuration_t));
 	}
 
 	lastOperation = millis();
@@ -51,7 +103,7 @@ void MyServo::reset()
 	Serial.println(" PWM RESET ");
 	for (uint8_t i = 0; i < NB_OF_SERVOS; ++i)
 	{
-		pwm->setPWM(servos[i].PWM_driver_index, 0, 0);
+		pwm->setPWM(servos[i].config.PWM_driver_index, 0, 0);
 	}
 
 	digitalWrite(SERVO_DC, HIGH);
@@ -108,7 +160,7 @@ void MyServo::tick()
 				{
 					for (uint8_t j = 0; j < NB_OF_SERVOS; ++j)
 					{
-						pwm->setPWM(servos[j].PWM_driver_index, 0, 0);
+						pwm->setPWM(servos[j].config.PWM_driver_index, 0, 0);
 					}
 					digitalWrite(SERVO_DC, HIGH);
 					state = SERVO_RESETTING;
@@ -116,7 +168,7 @@ void MyServo::tick()
 					lastOperation = millis();
 					Serial.println("State = SERVO_RESETTING");
 					Serial.println("servo_pointer = " + String(servo_pointer));
-					Serial.println("driver index = " + String(servos[servo_pointer].PWM_driver_index));
+					Serial.println("driver index = " + String(servos[servo_pointer].config.PWM_driver_index));
 					break;
 				}
 			}
@@ -126,7 +178,7 @@ void MyServo::tick()
 			if (millis() - lastOperation > SERVO_RESET_TIME)
 			{
 				digitalWrite(SERVO_DC, LOW);
-				pwm->setPWM(servos[servo_pointer].PWM_driver_index, 0, servos[servo_pointer].desired ? SERVOMIN : SERVOMAX);
+				pwm->setPWM(servos[servo_pointer].config.PWM_driver_index, 0, servos[servo_pointer].desired ? servos[servo_pointer].config.open_position : servos[servo_pointer].config.close_position);
 				state = SERVO_MOVING;
 				Serial.println("State = SERVO_MOVING");
 				lastOperation = millis();

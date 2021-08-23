@@ -34,10 +34,12 @@ private:
     uint8_t last_rx_val2;
 
     int8_t status;
+    uint8_t fail_cnt;
+    int initConnection(void);
 
 public:
 	void init(void);
-	void writeLine(String line);
+	void writeLine(uint8_t *buf, uint16_t len);
     String tick(void);
     uint32_t timeSinceLastPing(void);
     uplink_t getLastUplink(uint8_t* val1, uint8_t* val2);

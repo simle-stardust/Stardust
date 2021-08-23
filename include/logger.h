@@ -19,7 +19,8 @@ typedef enum reason_t_def
 class Logger {
 	private:
 	String log = "";
-	String log_udp = "";
+	uint8_t log_udp[204];
+	uint16_t log_udp_len;
 	MySD *flash;
 	MySensors *sensors;
 	MyUDP *udp;
@@ -37,11 +38,13 @@ public:
 	void add(uint32_t value);
 	void add(int32_t value);
 	void add(reason_t value);
-	void add_udp(String value);
-	void add_udp(float value);
-	void add_udp(int value);
+	void add_udp(uint8_t value);
+	void add_udp(uint16_t value);
 	void add_udp(uint32_t value);
+	void add_udp(int8_t value);
+	void add_udp(int16_t value);
 	void add_udp(int32_t value);
+	void add_udp(float value);
 	void save();
 	String line();
 	void write_to_sd(String value);

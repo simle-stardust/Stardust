@@ -2,16 +2,18 @@
 
 // Enter a MAC address and IP address for your controller below.
 // The IP address will be dependent on your local network:
-byte mac[6] = {0xA8, 0x61, 0x0A, 0xAE, 0x82, 0xA6};
+byte mac[6] = {0xA8, 0x61, 0x0A, 0xAE, 0x75, 0x4F};
+
+#define RECONNECT_SECONDS_INTERVAL 60
 
 #define HACKERSPACE_TESTING
 
 #ifdef HACKERSPACE_TESTING
 	// actually it can be assigned to us automatically
 	// by DHCP, at least in my home //Szymon
-	IPAddress our_ip(192, 168, 1, 105);
+	IPAddress our_ip(169, 254, 54, 75);
 	// IP address we will be sending data to
-	IPAddress ground_ip(192, 168, 1, 100);
+	IPAddress ground_ip(169, 254, 54, 76);
 	// port on which we will be listening for data
 	unsigned long our_port = 2137;
 	// port we are sending data to
@@ -23,9 +25,30 @@ byte mac[6] = {0xA8, 0x61, 0x0A, 0xAE, 0x82, 0xA6};
 	unsigned long port = 2137;
 #endif
 
+int MyUDP::initConnection(void)
+{
+	//int ret = Ethernet.begin(mac, 10000, 10000);
+
+	Ethernet.begin(mac, our_ip);
+
+	// TODO: Change init function if using static config
+	//if (ret != 1) // timeouts for DHCP
+	//{
+	//	Serial.println("UDP: error:  " + String(ret));
+	//	return -1;
+	//}
+	if (Udp.begin(our_port) != 1)
+	{
+		Serial.println("UDP: error2");
+		return -1;
+	}
+	return 0;
+}
+
 void MyUDP::init(void)
 {
 	pingTime = 0;
+	fail_cnt = 0;
 	last_rx_uplink = UPLINK_NONE;
 
 	last_rx_val1 = LAST_RX_VAL_NONE;
@@ -34,24 +57,11 @@ void MyUDP::init(void)
 	// start the Ethernet and UDP:
   	Ethernet.init(10);  // Most Arduino shields
 
-	//int ret = Ethernet.begin(mac, 10000, 10000);
-
-	Ethernet.begin(mac, our_ip);
-
-	// TODO: Change init function if using static config
-	//if (ret != 1) // timeouts for DHCP
-	//{
-	//	status = -1;
-	//	Serial.println("UDP: error:  " + String(ret));
-	//	return;
-	//}
-	if (Udp.begin(our_port) != 1)
+	if (this->initConnection() != 0)
 	{
 		status = -1;
-		Serial.println("UDP: error2");
 		return;
 	}
-	status = 0;
 	Serial.println("UDP: ok");
 
 	IPAddress assigned_ip = Ethernet.localIP();
@@ -67,34 +77,19 @@ void MyUDP::init(void)
 	Serial.println(toPrint);
 }
 
-void MyUDP::writeLine(String line)
+void MyUDP::writeLine(uint8_t *buf, uint16_t len)
 { 
-	size_t len = line.length();
-    size_t i = 0;
-
 	// do not attempt to send because it will block for a long time
 	if (status != 0) return;
 
-	Serial.print("Writing to UDP: ");
-	Serial.println(line);
-
     // the actual loop that enumerates the buffer
-    for (i=0; i < len/DOWNLINK_SINGLE_PKT_SIZE; ++i)
-    {
-        memcpy(TxBuffer, line.c_str() + (i * DOWNLINK_SINGLE_PKT_SIZE), DOWNLINK_SINGLE_PKT_SIZE);
-    	Udp.beginPacket(ground_ip, ground_port);
-		Udp.write(TxBuffer, DOWNLINK_SINGLE_PKT_SIZE);
-		Udp.endPacket();
-    }
-
-    // if there is anything left over
-    if (len % DOWNLINK_SINGLE_PKT_SIZE)
+	Udp.beginPacket(ground_ip, ground_port);
+	Udp.write(buf, len);
+	if (Udp.endPacket() != 1)
 	{
-        memcpy(TxBuffer, line.c_str() + (len - len % DOWNLINK_SINGLE_PKT_SIZE), len % DOWNLINK_SINGLE_PKT_SIZE);
-    	Udp.beginPacket(ground_ip, ground_port);
-		Udp.write(TxBuffer, len % DOWNLINK_SINGLE_PKT_SIZE);
-		Udp.endPacket();
-	}
+		status = -1;
+		fail_cnt = 0;
+	};
 }
 
 String MyUDP::tick(void)
@@ -104,7 +99,30 @@ String MyUDP::tick(void)
 	pingTime++;
 
 	// do not attempt to rx because it will block for a long time
-	if (status != 0) return ret;
+	// TODO: attempt to reestablish comms every now and then
+	if (status != 0) 
+	{
+		if (fail_cnt++ != RECONNECT_SECONDS_INTERVAL)
+		{
+			return ret;
+		}
+		else 
+		{
+			fail_cnt = 0;
+			// Attempt to reconnect
+			Serial.print("Reconnecting...");	
+			if (this->initConnection() != 0)
+			{
+				status = -1;
+			}
+			else 
+			{
+				// connection reestablished
+				status = 0;
+			}
+			return ret;
+		}
+	}
 
 	// if there's data available, read a packet
 	int packetSize = Udp.parsePacket();

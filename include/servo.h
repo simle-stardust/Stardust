@@ -6,8 +6,6 @@
 
 #define NB_OF_SERVOS  7
 
-#define SERVOMIN  300 // This is the 'minimum' pulse length count (out of 4096)
-#define SERVOMAX  600 // This is the 'maximum' pulse length count (out of 4096)
 #define SERVO_FREQ 60
 #define SERVO_RESET_TIME    1000
 #define SERVO_SAMPLING_TIME 2000
@@ -17,10 +15,18 @@
 
 #define SERVO_DC 47
 
+typedef struct 
+{
+	char name[4];
+	uint16_t open_position;
+	uint16_t close_position;
+	uint8_t PWM_driver_index;
+} servo_configuration_t;
+
 struct servo_status {
 	bool status = 0;
 	bool desired = 0;
-	uint8_t PWM_driver_index;
+	servo_configuration_t config;
 };
 
 typedef enum
