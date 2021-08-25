@@ -1,5 +1,15 @@
 #include "director.h"
 #include <EEPROM.h>
+#include <Watchdog.h>
+
+#define PUMP_SAMPLING_ON_PWM_VALUE   255
+#define PUMP_SAMPLING_OFF_PWM_VALUE  0
+#define EXT_LEDS_ADDRESS 0x26
+
+uint8_t state_cnt = 0;
+
+Watchdog watchdog;
+pca9555 *external_leds;
 
 Flight::Flight() : servos(), GPS_main(&Serial3)
 {
@@ -32,6 +42,17 @@ void Flight::init()
 
 	Serial.print("Finished: ");
 	Serial.println(flight.finished);
+
+	watchdog.enable(Watchdog::TIMEOUT_8S);
+	
+	external_leds = new pca9555(EXT_LEDS_ADDRESS);//instance
+
+	external_leds->begin();
+	external_leds->gpioPinMode(OUTPUT);
+	for (uint8_t i = 0; i < 16; i++)
+	{
+		external_leds->gpioDigitalWrite(i, 0);
+	}
 }
 
 void Flight::tick()
@@ -62,7 +83,7 @@ void Flight::tick()
 
 	if (millis() - lastOperation > SAMPLING_TIME)
 	{
-		
+		watchdog.reset();
 		servos.tick();
 		adc.tick();
 		
@@ -106,6 +127,7 @@ void Flight::tick()
 				if ((uplink_val1 >= 0) && (uplink_val1 <= 4))
 				{
 					setPhase(uplink_val1);
+					reason = REASON_UDP;
 				}
 				break;
 			default:
@@ -214,8 +236,14 @@ void Flight::tick()
 				flight.sampling = true;
 			}
 
-
-			//servos.tick();
+			if (state_cnt == 0)
+			{
+				pwms.set(PWM_PUMP_1, PUMP_SAMPLING_ON_PWM_VALUE);
+			}
+			else if (state_cnt == 1)
+			{
+				pwms.set(PWM_PUMP_2, PUMP_SAMPLING_ON_PWM_VALUE);
+			}
 
 			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
 			// IN MANUAL MODE (LONG TIME HAS PASSED SINCE LAST PING)
@@ -258,7 +286,14 @@ void Flight::tick()
 				flight.sampling = false;
 			}
 
-			//servos.tick();
+			if (state_cnt == 0)
+			{
+				pwms.set(PWM_PUMP_1, PUMP_SAMPLING_OFF_PWM_VALUE);
+			}
+			else if (state_cnt == 1)
+			{
+				pwms.set(PWM_PUMP_2, PUMP_SAMPLING_OFF_PWM_VALUE);
+			}
 			
 			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
 			// IN MANUAL MODE (LONG TIME HAS PASSED SINCE LAST PING)
@@ -300,6 +335,11 @@ void Flight::tick()
 			break;
 		}
 
+		if (state_cnt < 255)
+		{
+			state_cnt++;
+		}
+
 		this->saveFlightToEEPROM();
 
 		lastOperation = millis();
@@ -320,6 +360,7 @@ void Flight::nextPhase()
 		flight.phase++;
 		Serial.print("\n Advancing to Phase: ");
 		Serial.println(flight.phase);
+		state_cnt = 0;
 	}
 	else
 	{
@@ -330,6 +371,7 @@ void Flight::nextPhase()
 void Flight::prevPhase()
 {
 	flight.phase--;
+	state_cnt = 0;
 	Serial.print("\n Advancing to Phase: ");
 	Serial.println(flight.phase);
 }
@@ -337,6 +379,7 @@ void Flight::prevPhase()
 void Flight::setPhase(int phase)
 {
 	flight.phase = phase;
+	state_cnt = 0;
 	Serial.print("\n Advancing to Phase: ");
 	Serial.println(flight.phase);
 }

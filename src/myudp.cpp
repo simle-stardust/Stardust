@@ -11,9 +11,9 @@ byte mac[6] = {0xA8, 0x61, 0x0A, 0xAE, 0x75, 0x4F};
 #ifdef HACKERSPACE_TESTING
 	// actually it can be assigned to us automatically
 	// by DHCP, at least in my home //Szymon
-	IPAddress our_ip(169, 254, 54, 75);
+	IPAddress our_ip(192, 168, 137, 5);
 	// IP address we will be sending data to
-	IPAddress ground_ip(169, 254, 54, 76);
+	IPAddress ground_ip(192, 168, 137, 1);
 	// port on which we will be listening for data
 	unsigned long our_port = 2137;
 	// port we are sending data to

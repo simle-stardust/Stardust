@@ -12,52 +12,59 @@
 #define SERVOMIN  300 // This is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  600 // This is the 'maximum' pulse length count (out of 4096)
 
-
+#define SERVO_DEBUG
 
 const servo_configuration_t servos_configuration[NB_OF_SERVOS] = 
 {
 	{
-		.name = "J14",
-		.open_position = SERVOMIN,
-		.close_position = SERVOMAX,
-		.PWM_driver_index = 8
+		"J14",
+		SERVOMIN,
+		SERVOMAX,
+		8,
+		14
 	},
 	{
-		.name = "J13",
-		.open_position = SERVOMIN,
-		.close_position = SERVOMAX,
-		.PWM_driver_index = 9
+		"J13",
+		SERVOMIN,
+		SERVOMAX,
+		9,
+		13
 	},
 	{
-		.name = "J12",
-		.open_position = SERVOMIN,
-		.close_position = SERVOMAX,
-		.PWM_driver_index = 10
+		"J12",
+		SERVOMIN,
+		SERVOMAX,
+		10,
+		12
 	},
 	{
-		.name = "J11",
-		.open_position = SERVOMIN,
-		.close_position = SERVOMAX,
-		.PWM_driver_index = 11
+		"J11",
+		SERVOMIN,
+		SERVOMAX,
+		11,
+		11
 	},
 	{
-		.name = "J10",
-		.open_position = SERVOMIN,
-		.close_position = SERVOMAX,
-		.PWM_driver_index = 12
+		"J10",
+		SERVOMIN,
+		SERVOMAX,
+		12,
+		10
 	},
 	{
-		.name = "J9",
-		.open_position = SERVOMIN,
-		.close_position = SERVOMAX,
-		.PWM_driver_index = 13
+		"J9",
+		SERVOMIN,
+		SERVOMAX,
+		13,
+		9
 	},
 	{
-		.name = "J8",
-		.open_position = SERVOMIN,
-		.close_position = SERVOMAX,
-		.PWM_driver_index = 14
-	},
+		"J8",
+		SERVOMIN,
+		SERVOMAX,
+		14,
+		8
+	}
 };
 
 
@@ -79,7 +86,9 @@ MyServo::MyServo()
 void MyServo::init()
 {
 
+#ifdef SERVO_DEBUG
 	Serial.println(" INITIALIZING SERVOS ");
+#endif
 
 	pinMode(SERVO_DC, OUTPUT);
 
@@ -98,29 +107,17 @@ void MyServo::init()
 	servo_pointer = 0;
 }
 
-void MyServo::reset()
-{
-	Serial.println(" PWM RESET ");
-	for (uint8_t i = 0; i < NB_OF_SERVOS; ++i)
-	{
-		pwm->setPWM(servos[i].config.PWM_driver_index, 0, 0);
-	}
-
-	digitalWrite(SERVO_DC, HIGH);
-	Serial.println(" POWER RESET ");
-	delay(1000);
-	digitalWrite(SERVO_DC, LOW);
-}
-
 void MyServo::setOpen(uint8_t servo)
 {
 	if (servo >= NB_OF_SERVOS + 1) return; 
 
 	servos[servo - 1].desired = 1;
 
+#ifdef SERVO_DEBUG
 	Serial.print("Set ");
 	Serial.print(servo);
 	Serial.println(" to Open");
+#endif
 }
 
 void MyServo::setClosed(uint8_t servo)
@@ -128,9 +125,12 @@ void MyServo::setClosed(uint8_t servo)
 	if (servo >= NB_OF_SERVOS + 1) return; 
 
 	servos[servo - 1].desired = 0;
+	
+#ifdef SERVO_DEBUG
 	Serial.print("Set ");
 	Serial.print(servo);
 	Serial.println(" to Closed");
+#endif
 }
 
 bool MyServo::getStatus(uint8_t servo)
@@ -139,6 +139,7 @@ bool MyServo::getStatus(uint8_t servo)
 
 	//gpio_expander->gpioPort(0);
 	//Serial.print(gpio_expander->readGpioPort(), HEX);
+	//Serial.println("   ");
 	//Serial.print(" ");
 
 	
@@ -146,7 +147,8 @@ bool MyServo::getStatus(uint8_t servo)
 
 	// TODO: change to reading digital 
 	// inputs from krancowki
-	return servos[servo - 1].status;
+	//return servos[servo - 1].status;
+	return (bool)gpio_expander->gpioDigitalRead(servos[servo - 1].config.endswitch_index);
 }
 
 void MyServo::tick()
@@ -166,9 +168,11 @@ void MyServo::tick()
 					state = SERVO_RESETTING;
 					servo_pointer = i;
 					lastOperation = millis();
+#ifdef SERVO_DEBUG
 					Serial.println("State = SERVO_RESETTING");
 					Serial.println("servo_pointer = " + String(servo_pointer));
 					Serial.println("driver index = " + String(servos[servo_pointer].config.PWM_driver_index));
+#endif
 					break;
 				}
 			}
@@ -180,7 +184,10 @@ void MyServo::tick()
 				digitalWrite(SERVO_DC, LOW);
 				pwm->setPWM(servos[servo_pointer].config.PWM_driver_index, 0, servos[servo_pointer].desired ? servos[servo_pointer].config.open_position : servos[servo_pointer].config.close_position);
 				state = SERVO_MOVING;
+#ifdef SERVO_DEBUG
 				Serial.println("State = SERVO_MOVING");
+				Serial.println("Setting PWM to = " + String(servos[servo_pointer].desired ? servos[servo_pointer].config.open_position : servos[servo_pointer].config.close_position));
+#endif
 				lastOperation = millis();
 			}
 			break;
@@ -188,10 +195,12 @@ void MyServo::tick()
 		case SERVO_MOVING:
 			if (millis() - lastOperation > SERVO_SAMPLING_TIME)
 			{
+#ifdef SERVO_DEBUG
 				Serial.println("State = SERVO_IDLE");
+				Serial.print(servos[servo_pointer].desired ? "Opened " : "Closed ");
+#endif
 				state = SERVO_IDLE;
 				servos[servo_pointer].status = servos[servo_pointer].desired;
-				Serial.print(servos[servo_pointer].desired ? "Opened " : "Closed ");
 				digitalWrite(SERVO_DC, HIGH);
 			}
 			break;

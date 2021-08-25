@@ -21,6 +21,7 @@ typedef struct
 	uint16_t open_position;
 	uint16_t close_position;
 	uint8_t PWM_driver_index;
+	uint8_t endswitch_index;
 } servo_configuration_t;
 
 struct servo_status {
