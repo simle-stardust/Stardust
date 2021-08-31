@@ -223,7 +223,7 @@ void MyServo::openSequence()
 {
 	init();
 
-	for (uint8_t i = 1; i < NB_OF_SERVOS; ++i)
+	for (uint8_t i = 1; i < NB_OF_SERVOS + 1; ++i)
 	{
 		setOpen(i);
 	}
@@ -233,7 +233,7 @@ void MyServo::closeSequence()
 {
 	init();
 
-	for (uint8_t i = 1; i < NB_OF_SERVOS; ++i)
+	for (uint8_t i = 1; i < NB_OF_SERVOS + 1; ++i)
 	{
 		setClosed(i);
 	}

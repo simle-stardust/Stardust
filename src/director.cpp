@@ -6,7 +6,7 @@
 #define PUMP_SAMPLING_OFF_PWM_VALUE  0
 #define EXT_LEDS_ADDRESS 0x26
 
-uint8_t state_cnt = 0;
+uint32_t state_cnt = 0;
 
 Watchdog watchdog;
 pca9555 *external_leds;
@@ -335,12 +335,36 @@ void Flight::tick()
 			break;
 		}
 
-		if (state_cnt < 255)
+		if (state_cnt != UINT32_MAX)
 		{
 			state_cnt++;
 		}
 
 		this->saveFlightToEEPROM();
+
+		// controlling external LEDs
+
+		external_leds->gpioDigitalWrite(0, (bool)(state_cnt & 0x01));
+		// LED1, LED2 and LED3 inform about current experiment state
+		external_leds->gpioDigitalWrite(1, (bool)(flight.phase & 0x01));
+		external_leds->gpioDigitalWrite(2, (bool)(flight.phase & 0x02));
+		external_leds->gpioDigitalWrite(3, (bool)(flight.phase & 0x04));
+		// LED4 is UDP status
+		external_leds->gpioDigitalWrite(4, (bool)(udp.getStatus() == 0 ? 1 : 0));
+		// LED5 is time since last ping
+		external_leds->gpioDigitalWrite(5, (bool)(time_since_last_uplink < 120 ? 1 : 0));
+		// LED6 is GPS status
+		MyAltitude alt = sensors.altitude(0);
+		external_leds->gpioDigitalWrite(6, alt.isValid);
+		// LED7 is pressure 1 status
+		alt = sensors.altitude(1);
+		external_leds->gpioDigitalWrite(7, alt.isValid);
+		// LED8 is pressure 2 status
+		alt = sensors.altitude(2);
+		external_leds->gpioDigitalWrite(8, alt.isValid);
+
+
+
 
 		lastOperation = millis();
 	}

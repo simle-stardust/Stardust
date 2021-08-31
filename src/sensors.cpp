@@ -76,7 +76,7 @@ void MySensors::getAltitude()
 	}
 	altitude_1.timestamp = pressure_1.timestamp;
 
-	if (pressure_1.readout_status == 0)
+	if (pressure_2.readout_status != 0)
 	{
 		altitude_2.value = pressureToAltitude(LIFTOFF_PRESSURE, pressure_2.value, temperature(2));
 		altitude_2.average = pressureToAltitude(LIFTOFF_PRESSURE, pressure_2.average, temperature(2));

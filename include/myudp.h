@@ -39,6 +39,7 @@ private:
 
 public:
 	void init(void);
+    int8_t getStatus(void);
 	void writeLine(uint8_t *buf, uint16_t len);
     String tick(void);
     uint32_t timeSinceLastPing(void);

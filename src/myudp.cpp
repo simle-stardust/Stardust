@@ -11,9 +11,9 @@ byte mac[6] = {0xA8, 0x61, 0x0A, 0xAE, 0x75, 0x4F};
 #ifdef HACKERSPACE_TESTING
 	// actually it can be assigned to us automatically
 	// by DHCP, at least in my home //Szymon
-	IPAddress our_ip(192, 168, 137, 5);
+	IPAddress our_ip(192, 168, 1, 105);
 	// IP address we will be sending data to
-	IPAddress ground_ip(192, 168, 137, 1);
+	IPAddress ground_ip(192, 168, 1, 100);
 	// port on which we will be listening for data
 	unsigned long our_port = 2137;
 	// port we are sending data to
@@ -92,6 +92,11 @@ void MyUDP::writeLine(uint8_t *buf, uint16_t len)
 	};
 }
 
+int8_t MyUDP::getStatus(void)
+{
+	return status;
+}
+
 String MyUDP::tick(void)
 {  
 	String ret = "";
@@ -99,7 +104,6 @@ String MyUDP::tick(void)
 	pingTime++;
 
 	// do not attempt to rx because it will block for a long time
-	// TODO: attempt to reestablish comms every now and then
 	if (status != 0) 
 	{
 		if (fail_cnt++ != RECONNECT_SECONDS_INTERVAL)
