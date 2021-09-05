@@ -311,7 +311,7 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 #endif
 
 	this->add(pwms->read(PWM_HEATING));
-	this->add_udp(pwms->read(PWM_PUMP_2));
+	this->add_udp(pwms->read(PWM_HEATING));
 	
 #ifdef LOGGER_DEBUG
 	Serial.print(",	Phase:		");
@@ -369,10 +369,14 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 	
 #ifdef LOGGER_DEBUG
 	Serial.println();
-	// Current SED has only 3 values (2 x pumps and heating system)
-	//Serial.print("ADC [4]:	");
-	//	this->add(adc->getADC(3));
-	//	Serial.println();
+	Serial.print("ADC [4]:	");
+#endif
+
+	this->add(adc->getADC(3));
+	this->add_udp(adc->getADC(3));
+	
+#ifdef LOGGER_DEBUG
+	Serial.println();
 	Serial.print("Reason of change:   ");
 #endif
 

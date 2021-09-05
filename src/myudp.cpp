@@ -220,7 +220,7 @@ String MyUDP::tick(void)
 
 				if (sscanf(RxBuffer, "setPump_%i_%i", &val1, &val2) == 2)
 				{
-					if (((val1 == 1) || (val1 == 2)) && ((val2 >= 0) && (val2 < 256)))
+					if (((val1 >= 1) && (val1 <= 3)) && ((val2 >= 0) && (val2 < 256)))
 					{
 						last_rx_uplink = UPLINK_SET_PUMP;
 						last_rx_val1 = val1;
@@ -244,37 +244,6 @@ String MyUDP::tick(void)
 			else 
 			{
 				ret = "Error! setPump len: " + String(packetSize);
-			}
-		}
-		else if (strncmp(RxBuffer, "setHeating_", 11) == 0)
-		{
-			if (packetSize >= 12)
-			{
-				int val1;
-
-				if (sscanf(RxBuffer, "setHeating_%i", &val1) == 1)
-				{
-					if ((val1 >= 0) && (val1 < 256))
-					{
-						last_rx_uplink = UPLINK_SET_HEATING;
-						last_rx_val1 = val1;
-						pingTime = 0;
-					}
-					else 
-					{
-						last_rx_val1 = LAST_RX_VAL_NONE;
-					}
-				}
-				else 
-				{
-					last_rx_val1 = LAST_RX_VAL_NONE;
-				}
-
-				ret = "RX: setHeating: " + String(last_rx_val1) + String(last_rx_val2);
-			}
-			else 
-			{
-				ret = "Error! setHeating len: " + String(packetSize);
 			}
 		}
 		else

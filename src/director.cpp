@@ -96,9 +96,6 @@ void Flight::tick()
 
 		switch (last_uplink)
 		{
-			case UPLINK_SET_HEATING:
-				pwms.set(PWM_HEATING, uplink_val1);
-				break;
 			case UPLINK_SET_PUMP:
 				if (uplink_val1 == 1)
 				{
@@ -107,6 +104,10 @@ void Flight::tick()
 				else if (uplink_val1 == 2)
 				{
 					pwms.set(PWM_PUMP_2, uplink_val2);
+				}
+				else if (uplink_val1 == 3)
+				{
+					pwms.set(PWM_HEATING, uplink_val2);
 				}
 				break;
 			case UPLINK_SET_VALVE:
