@@ -19,7 +19,7 @@ typedef enum reason_t_def
 class Logger {
 	private:
 	String log = "";
-	uint8_t log_udp[204];
+	uint8_t log_udp[208];
 	uint16_t log_udp_len;
 	MySD *flash;
 	MySensors *sensors;

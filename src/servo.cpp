@@ -9,8 +9,8 @@
 // J13 - 8 - 9
 // J14 - 7 - 8
 
-#define SERVOMIN  300 // This is the 'minimum' pulse length count (out of 4096)
-#define SERVOMAX  600 // This is the 'maximum' pulse length count (out of 4096)
+#define SERVO_OPEN  400 // This is the 'minimum' pulse length count (out of 4096)
+#define SERVO_CLOSE  100 // This is the 'maximum' pulse length count (out of 4096)
 
 #define SERVO_DEBUG
 
@@ -18,50 +18,50 @@ const servo_configuration_t servos_configuration[NB_OF_SERVOS] =
 {
 	{
 		"J14",
-		SERVOMIN,
-		SERVOMAX,
+		400,  // open position
+		100,  // close position
 		8,
 		14
 	},
 	{
 		"J13",
-		SERVOMIN,
-		SERVOMAX,
+		182,
+		501,
 		9,
 		13
 	},
 	{
 		"J12",
-		SERVOMIN,
-		SERVOMAX,
+		400,
+		100, //git
 		10,
 		12
 	},
 	{
 		"J11",
-		SERVOMIN,
-		SERVOMAX,
+		182,
+		501,
 		11,
 		11
 	},
 	{
 		"J10",
-		SERVOMIN,
-		SERVOMAX,
+		SERVO_OPEN,
+		SERVO_CLOSE,
 		12,
 		10
 	},
 	{
 		"J9",
-		SERVOMIN,
-		SERVOMAX,
+		SERVO_OPEN,
+		SERVO_CLOSE,
 		13,
 		9
 	},
 	{
 		"J8",
-		SERVOMIN,
-		SERVOMAX,
+		SERVO_OPEN,
+		SERVO_CLOSE,
 		14,
 		8
 	}
@@ -138,7 +138,7 @@ bool MyServo::getStatus(uint8_t servo)
 	if (servo >= NB_OF_SERVOS + 1) return 0;
 
 	//gpio_expander->gpioPort(0);
-	//Serial.print(gpio_expander->readGpioPort(), HEX);
+	//Serial.println(gpio_expander->readGpioPort(), HEX);
 	//Serial.println("   ");
 	//Serial.print(" ");
 
@@ -183,6 +183,9 @@ void MyServo::tick()
 			{
 				digitalWrite(SERVO_DC, LOW);
 				pwm->setPWM(servos[servo_pointer].config.PWM_driver_index, 0, servos[servo_pointer].desired ? servos[servo_pointer].config.open_position : servos[servo_pointer].config.close_position);
+
+				Serial.print("Setting servo to ");
+				Serial.println(servos[servo_pointer].desired ? servos[servo_pointer].config.open_position : servos[servo_pointer].config.close_position);
 				state = SERVO_MOVING;
 #ifdef SERVO_DEBUG
 				Serial.println("State = SERVO_MOVING");
