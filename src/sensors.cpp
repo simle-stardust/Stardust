@@ -1,11 +1,36 @@
 #include "sensors.h"
 
+
 MySensors::MySensors() : onewire_main(ONE_WIRE_main), onewire_sens(ONE_WIRE_sens), dht_main(DHT22_main), dht_sens(DHT22_sens), dht_mech(DHT22_mech), pressure_main(PRESSURE_SS_main, 0, 15.0), pressure_sens(PRESSURE_SS_sens, 0, 15.0)
 {
 }
 
 void MySensors::init(MyRTC *_rtc, Adafruit_GPS* _GPS_main)
 {
+	uint8_t gps_buf[44] = 
+	{
+    	0xB5, 0x62, 0x06, 0x24, 0x24, 0x00, 0xFF, 0xFF, 
+		0x08, 0x03, 0x00, 0x00, 0x00, 0x00, 0x10, 0x27, 
+		0x00, 0x00, 0x05, 0x00, 0xFA, 0x00, 0xFA, 0x00, 
+		0x64, 0x00, 0x2C, 0x01, 0x00, 0x00, 0x00, 0x00, 
+		0x10, 0x27, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x4F, 0x1F
+	};
+
+	uint8_t gps_msg2[8] = 
+	{
+		0xB5, 
+		0x62, 
+		0x06, 
+		0x24, 
+		0x00, 
+		0x00, 
+		0x2A, 
+		0x84
+	};
+
+	uint8_t ck_a = 0, ck_b = 0;
+
 	rtc = _rtc;
 	GPS_main = _GPS_main;
 	temp_main.init(onewire_main);
@@ -20,6 +45,21 @@ void MySensors::init(MyRTC *_rtc, Adafruit_GPS* _GPS_main)
 	// For the parsing code to work nicely and have time to sort thru the data, and
 	// print it out we don't suggest using anything higher than 1 Hz
 	GPS_main->sendCommand(PMTK_SET_NMEA_UPDATE_1HZ); // 1 Hz update rate
+
+	// Set gps to airbourne mode
+
+	for (uint8_t i = 0; i < 44; i++)
+	{
+		GPS_main->write(gps_buf[i]);
+	}
+
+	delay(10);
+
+	// poll for status to see if config changed
+	for (uint8_t i = 0; i < 8; i++)
+	{
+		GPS_main->write(gps_msg2[i]);
+	}
 }
 
 void MySensors::readSensors()

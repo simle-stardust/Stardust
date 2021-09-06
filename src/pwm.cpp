@@ -16,15 +16,15 @@ void MyPWMs::set(pwm_type_t pwm, uint8_t val)
     switch (pwm)
     {
     case PWM_HEATING:
-        currentVals[PWM_HEATING] = val;
+        currentVals[2] = val;
         analogWrite(HEATING_ANALOG_PIN, val);
         break;
     case PWM_PUMP_1:
-        currentVals[PWM_PUMP_1] = val;
+        currentVals[0] = val;
         analogWrite(PUMP_1_ANALOG_PIN, val);
         break;
     case PWM_PUMP_2:
-        currentVals[PWM_PUMP_2] = val;
+        currentVals[1] = val;
         analogWrite(PUMP_2_ANALOG_PIN, val);
         break;
     default:
@@ -34,5 +34,6 @@ void MyPWMs::set(pwm_type_t pwm, uint8_t val)
 
 uint8_t MyPWMs::read(pwm_type_t pwm)
 {
-    return currentVals[(uint8_t)pwm];
+    uint8_t index = (uint8_t)pwm;
+    return currentVals[index];
 }

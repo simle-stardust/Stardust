@@ -4,7 +4,7 @@
 // The IP address will be dependent on your local network:
 byte mac[6] = {0xA8, 0x61, 0x0A, 0xAE, 0x75, 0x4F};
 
-#define RECONNECT_SECONDS_INTERVAL 60
+#define RECONNECT_SECONDS_INTERVAL 15
 
 #define HACKERSPACE_TESTING
 
