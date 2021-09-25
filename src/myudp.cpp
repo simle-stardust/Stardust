@@ -101,8 +101,6 @@ String MyUDP::tick(void)
 {  
 	String ret = "";
 
-	pingTime++;
-
 	// do not attempt to rx because it will block for a long time
 	if (status != 0) 
 	{
@@ -156,7 +154,7 @@ String MyUDP::tick(void)
 		Serial.println(RxBuffer);
 		if (strcmp(RxBuffer, "ping") == 0)
 		{
-			pingTime = 0;
+			pingTime = millis();
 			ret = "Rx: ping"; 
 		}
 		else if (strncmp(RxBuffer, "setState_", 9) == 0)
@@ -168,7 +166,7 @@ String MyUDP::tick(void)
 				{
 					last_rx_uplink = UPLINK_SET_STATE;
 					last_rx_val1 = RxBuffer[9] - '0';
-					pingTime = 0;
+					pingTime = millis();
 				}
 				else 
 				{
@@ -196,7 +194,7 @@ String MyUDP::tick(void)
 						last_rx_uplink = UPLINK_SET_VALVE;
 						last_rx_val1 = val1;
 						last_rx_val2 = val2;
-						pingTime = 0;
+						pingTime = millis();
 					}
 					else 
 					{
@@ -225,7 +223,7 @@ String MyUDP::tick(void)
 						last_rx_uplink = UPLINK_SET_PUMP;
 						last_rx_val1 = val1;
 						last_rx_val2 = val2;
-						pingTime = 0;
+						pingTime = millis();
 					}
 					else 
 					{
@@ -256,7 +254,7 @@ String MyUDP::tick(void)
 
 uint32_t MyUDP::timeSinceLastPing()
 {
-	return pingTime;
+	return ((millis() - pingTime)/1000UL);
 }
 
 uplink_t MyUDP::getLastUplink(uint8_t* val1, uint8_t* val2)

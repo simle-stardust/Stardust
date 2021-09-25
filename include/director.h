@@ -19,7 +19,10 @@ struct MyFlight
 	bool ground = false;
 	bool inFlight = false;
 	bool sampling = false;
+	bool valvesOpened = false;
+	bool valvesClosed = false;
 	bool finished = false;
+	uint32_t last_uplink_timestamp;
 	int liftoff_day = 0;
 	int liftoff_hour = 0;
 	int liftoff_minute = 0;

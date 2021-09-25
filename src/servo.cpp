@@ -1,4 +1,5 @@
 #include "servo.h"
+#include "config.h"
 
 // pin  / servo_pointer value (index in array)  / setValve telecommand value
 // J8 - 13 - 14
@@ -14,33 +15,34 @@
 
 #define SERVO_DEBUG
 
+#ifdef FLIGHT_BOX
 const servo_configuration_t servos_configuration[NB_OF_SERVOS] = 
 {
 	{
 		"J14",
-		400,  // open position
-		100,  // close position
+		SERVO_OPEN,  // open position
+		SERVO_CLOSE,  // close position
 		8,
 		14
 	},
 	{
 		"J13",
-		182,
-		501,
+		SERVO_OPEN,  // open position
+		SERVO_CLOSE,  // close position
 		9,
 		13
 	},
 	{
 		"J12",
-		400,
-		100, //git
+		SERVO_OPEN,  // open position
+		SERVO_CLOSE,  // close position
 		10,
 		12
 	},
 	{
 		"J11",
-		182,
-		501,
+		SERVO_OPEN,
+		SERVO_CLOSE,
 		11,
 		11
 	},
@@ -66,7 +68,60 @@ const servo_configuration_t servos_configuration[NB_OF_SERVOS] =
 		8
 	}
 };
-
+#else
+const servo_configuration_t servos_configuration[NB_OF_SERVOS] = 
+{
+	{
+		"J14",
+		SERVO_OPEN,  // open position
+		SERVO_CLOSE,  // close position
+		8,
+		14
+	},
+	{
+		"J13",
+		SERVO_OPEN,  // open position
+		SERVO_CLOSE,  // close position
+		9,
+		13
+	},
+	{
+		"J12",
+		SERVO_OPEN,  // open position
+		SERVO_CLOSE,  // close position
+		10,
+		12
+	},
+	{
+		"J11",
+		SERVO_CLOSE,  // close position
+		SERVO_OPEN,  // open position
+		11,
+		11
+	},
+	{
+		"J10",
+		SERVO_CLOSE,
+		SERVO_OPEN,
+		12,
+		10
+	},
+	{
+		"J9",
+		SERVO_OPEN,
+		SERVO_CLOSE,
+		13,
+		9
+	},
+	{
+		"J8",
+		SERVO_OPEN,
+		SERVO_CLOSE,
+		14,
+		8
+	}
+};
+#endif
 
 MyServo::MyServo()
 {
@@ -148,7 +203,25 @@ bool MyServo::getStatus(uint8_t servo)
 	// TODO: change to reading digital 
 	// inputs from krancowki
 	//return servos[servo - 1].status;
+
+
+#ifdef GROUND_BOX
+	bool retVal;
+
+	retVal = (bool)gpio_expander->gpioDigitalRead(servos[servo - 1].config.endswitch_index);
+
+	if (servo == 7)
+	{
+		return !retVal;
+	}
+	else 
+	{
+		return retVal;
+	}
+
+#else
 	return (bool)gpio_expander->gpioDigitalRead(servos[servo - 1].config.endswitch_index);
+#endif
 }
 
 void MyServo::tick()
@@ -238,6 +311,7 @@ void MyServo::closeSequence()
 
 	for (uint8_t i = 1; i < NB_OF_SERVOS + 1; ++i)
 	{
+		servos[i-1].status = 1;
 		setClosed(i);
 	}
 }

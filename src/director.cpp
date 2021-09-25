@@ -17,6 +17,8 @@ Flight::Flight() : servos(), GPS_main(&Serial3)
 
 void Flight::init()
 {
+	watchdog.enable(Watchdog::TIMEOUT_8S);
+
 	rtc.init();
 	// Year/Month/Day directory with file named after init time.
 	flash.init(rtc.dateString(rtc.getTime()), rtc.timeString(rtc.getTime()));
@@ -40,10 +42,13 @@ void Flight::init()
 	Serial.print("Sampling: ");
 	Serial.println(flight.sampling);
 
+	Serial.print("Valves Opened: ");
+	Serial.println(flight.valvesOpened);
+	Serial.print("Valves Closed: ");
+	Serial.println(flight.valvesClosed);
+
 	Serial.print("Finished: ");
 	Serial.println(flight.finished);
-
-	watchdog.enable(Watchdog::TIMEOUT_8S);
 	
 	external_leds = new pca9555(EXT_LEDS_ADDRESS);//instance
 
@@ -59,6 +64,8 @@ void Flight::tick()
 {
 	static reason_t reason = (reason_t)0;
 	
+	RtcDateTime timestamp;
+
 	uplink_t last_uplink = UPLINK_NONE;
 	uint8_t uplink_val1 = 0;
 	uint8_t uplink_val2 = 0;
@@ -93,6 +100,14 @@ void Flight::tick()
 
 		last_uplink = udp.getLastUplink(&uplink_val1, &uplink_val2);
 		time_since_last_uplink = udp.timeSinceLastPing();
+
+		timestamp = rtc.getTime().TotalSeconds();
+
+		if (time_since_last_uplink < 2)
+		{
+			// we have connection
+			flight.last_uplink_timestamp = timestamp;
+		}
 
 		switch (last_uplink)
 		{
@@ -152,11 +167,14 @@ void Flight::tick()
 				flight.inFlight = false;
 				flight.sampling = false;
 				flight.finished = false;
+				flight.valvesClosed = false;
+				flight.valvesOpened = false;
 			}
 
 			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
 			// IN MANUAL MODE (LONG TIME HAS PASSED SINCE LAST PING)
-			if (time_since_last_uplink > 120)
+			if ((!rtc.getStatus() && (timestamp - flight.last_uplink_timestamp > 120)) ||
+				(time_since_last_uplink > 120))
 			{
 				// Check if it's time to switch state
 				if (sensors.altitude(0).isValid)
@@ -196,7 +214,8 @@ void Flight::tick()
 
 			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
 			// IN MANUAL MODE (LONG TIME HAS PASSED SINCE LAST PING)
-			if (time_since_last_uplink > 120)
+			if ((!rtc.getStatus() && (timestamp - flight.last_uplink_timestamp > 120)) ||
+				(time_since_last_uplink > 120))
 			{
 				// Check if it's time to switch state
 				if (sensors.altitude(0).isValid)
@@ -232,23 +251,32 @@ void Flight::tick()
 				Serial.println(" Sampling ON");
 				Serial.println("Open sequence start");
 
-				servos.openSequence();
-
 				flight.sampling = true;
 			}
 
-			if (state_cnt == 0)
+			if (flight.valvesOpened != true && state_cnt == 1)
+			{
+				servos.openSequence();
+			}
+
+			if (state_cnt >= 0)
 			{
 				pwms.set(PWM_PUMP_1, PUMP_SAMPLING_ON_PWM_VALUE);
 			}
-			else if (state_cnt == 1)
+			if (state_cnt >= 1)
 			{
 				pwms.set(PWM_PUMP_2, PUMP_SAMPLING_ON_PWM_VALUE);
+			}
+			if (state_cnt >= 40)
+			{
+				// Actually check state of the servo machine?
+				flight.valvesOpened = true;
 			}
 
 			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
 			// IN MANUAL MODE (LONG TIME HAS PASSED SINCE LAST PING)
-			if (time_since_last_uplink > 120)
+			if ((!rtc.getStatus() && (timestamp - flight.last_uplink_timestamp > 120)) ||
+				(time_since_last_uplink > 120))
 			{
 				// Check if it's time to switch state
 				if (sensors.altitude(0).isValid)
@@ -283,22 +311,34 @@ void Flight::tick()
 			{
 				Serial.println(" Sampling OFF - Safing");
 				Serial.println("Close sequence start");
-				servos.closeSequence();
+				
+
 				flight.sampling = false;
 			}
 
-			if (state_cnt == 0)
+			if (flight.valvesClosed != true && state_cnt == 1)
+			{
+				servos.closeSequence();
+			}
+
+			if (state_cnt >= 0)
 			{
 				pwms.set(PWM_PUMP_1, PUMP_SAMPLING_OFF_PWM_VALUE);
 			}
-			else if (state_cnt == 1)
+			if (state_cnt >= 1)
 			{
 				pwms.set(PWM_PUMP_2, PUMP_SAMPLING_OFF_PWM_VALUE);
+			}
+			if (state_cnt >= 40)
+			{
+				// Actually check state of the servo machine?
+				flight.valvesClosed = true;
 			}
 			
 			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
 			// IN MANUAL MODE (LONG TIME HAS PASSED SINCE LAST PING)
-			if (time_since_last_uplink > 120)
+			if ((!rtc.getStatus() && (timestamp - flight.last_uplink_timestamp > 120)) ||
+				(time_since_last_uplink > 120))
 			{
 				// Check if it's time to switch state
 				if (sensors.altitude(0).isValid)
@@ -423,6 +463,15 @@ void Flight::readFlightFromEEPROM()
 	flight.inFlight = EEPROM.read(sizeof(int) + sizeof(bool));
 	flight.sampling = EEPROM.read(sizeof(int) + sizeof(bool) * 2);
 	flight.finished = EEPROM.read(sizeof(int) + sizeof(bool) * 3);
+	flight.valvesOpened = EEPROM.read(sizeof(int) + sizeof(bool) * 4);
+	flight.valvesClosed = EEPROM.read(sizeof(int) + sizeof(bool) * 5);
+
+	flight.last_uplink_timestamp = 0;
+
+	flight.last_uplink_timestamp |= (uint32_t)EEPROM.read(sizeof(int) + sizeof(bool) * 6);
+	flight.last_uplink_timestamp |= (uint32_t)((uint32_t)EEPROM.read(sizeof(int) + sizeof(bool) * 6 + 1) << 8LU);
+	flight.last_uplink_timestamp |= (uint32_t)((uint32_t)EEPROM.read(sizeof(int) + sizeof(bool) * 6 + 2) << 16LU);
+	flight.last_uplink_timestamp |= (uint32_t)((uint32_t)EEPROM.read(sizeof(int) + sizeof(bool) * 6 + 3) << 24LU);
 }
 
 void Flight::saveFlightToEEPROM()
@@ -432,4 +481,11 @@ void Flight::saveFlightToEEPROM()
 	EEPROM.update(sizeof(int) + sizeof(bool), flight.inFlight);
 	EEPROM.update(sizeof(int) + sizeof(bool) * 2, flight.sampling);
 	EEPROM.update(sizeof(int) + sizeof(bool) * 3, flight.finished);
+	EEPROM.update(sizeof(int) + sizeof(bool) * 4, flight.valvesOpened);
+	EEPROM.update(sizeof(int) + sizeof(bool) * 5, flight.valvesClosed);
+
+	EEPROM.update(sizeof(int) + sizeof(bool) * 6, (uint8_t)flight.last_uplink_timestamp);
+	EEPROM.update(sizeof(int) + sizeof(bool) * 6 + 1, (uint8_t)(flight.last_uplink_timestamp >> 8LU));
+	EEPROM.update(sizeof(int) + sizeof(bool) * 6 + 2, (uint8_t)(flight.last_uplink_timestamp >> 16LU));
+	EEPROM.update(sizeof(int) + sizeof(bool) * 6 + 3, (uint8_t)(flight.last_uplink_timestamp >> 24LU));
 }
