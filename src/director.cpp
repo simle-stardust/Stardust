@@ -161,7 +161,7 @@ void Flight::tick()
 				// Check if it's time to switch state
 				if (sensors.altitude(0).isValid)
 				{
-					if (sensors.altitude(0).average > 300)
+					if (sensors.altitude(0).average > 1000)
 					{
 						reason = REASON_ALTITUDE;
 						this->nextPhase();
@@ -364,8 +364,14 @@ void Flight::tick()
 		alt = sensors.altitude(2);
 		external_leds->gpioDigitalWrite(8, alt.isValid);
 
+		bool sd_status = logger.get_sd_status();
+		external_leds->gpioDigitalWrite(9, !sd_status);
 
-
+		if (sd_status != 0)
+		{
+			// try to reinit sd card
+			flash.init(rtc.dateString(rtc.getTime()), rtc.timeString(rtc.getTime()));
+		}
 
 		lastOperation = millis();
 	}

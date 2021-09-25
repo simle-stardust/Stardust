@@ -11,6 +11,8 @@ void Logger::init(MySD *_flash, MySensors *_sensors, MyUDP *_udp, MyADC*_adc, My
 	servos = _servos;
 	pwms = _pwms;
 
+	sd_status = 0;
+
 	//flash->writeLine("Date,Time,RTC_Temp,DHT_Humid,DHT_Temp,DS_Temp,Pressure,Temperature");
 };
 
@@ -394,6 +396,8 @@ void Logger::tick(int phase, bool ground, bool inFlight, bool sampling, bool fin
 	Serial.println();
 #endif
 
+	this->add_udp((uint8_t)sd_status);
+
 	this->save();
 
 	str_from_udp = udp->tick();
@@ -538,11 +542,16 @@ void Logger::save()
 {
 	log += "\n";
 
+	sd_status = flash->writeLine(log);
 	//Serial.println("UDP_LEN 666 = " + String(log_udp_len));
-	flash->writeLine(log);
 	udp->writeLine(&log_udp[0], log_udp_len);
 
 	log = "";
+}
+
+bool Logger::get_sd_status(void)
+{
+	return sd_status;
 }
 
 void Logger::write_to_sd(String value)

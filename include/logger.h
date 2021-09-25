@@ -19,7 +19,7 @@ typedef enum reason_t_def
 class Logger {
 	private:
 	String log = "";
-	uint8_t log_udp[208];
+	uint8_t log_udp[209];
 	uint16_t log_udp_len;
 	MySD *flash;
 	MySensors *sensors;
@@ -27,6 +27,8 @@ class Logger {
 	MyADC *adc;
 	MyServo *servos;
 	MyPWMs *pwms;
+
+	bool sd_status;
 
 public:
 	void init(MySD *_flash, MySensors *_sensors, MyUDP *_udp, MyADC *_adc, MyServo *_servos, MyPWMs *_pwms);
@@ -48,4 +50,5 @@ public:
 	void save();
 	String line();
 	void write_to_sd(String value);
+	bool get_sd_status(void);
 };
