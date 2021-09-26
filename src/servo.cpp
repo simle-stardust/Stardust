@@ -20,21 +20,21 @@ const servo_configuration_t servos_configuration[NB_OF_SERVOS] =
 {
 	{
 		"J14",
-		SERVO_OPEN,  // open position
+		370,  // open position
 		SERVO_CLOSE,  // close position
 		8,
 		14
 	},
 	{
 		"J13",
-		SERVO_OPEN,  // open position
+		370,  // open position
 		SERVO_CLOSE,  // close position
 		9,
 		13
 	},
 	{
 		"J12",
-		SERVO_OPEN,  // open position
+		380,  // open position
 		SERVO_CLOSE,  // close position
 		10,
 		12
@@ -55,7 +55,7 @@ const servo_configuration_t servos_configuration[NB_OF_SERVOS] =
 	},
 	{
 		"J9",
-		SERVO_OPEN,
+		386,
 		SERVO_CLOSE,
 		13,
 		9
@@ -94,8 +94,8 @@ const servo_configuration_t servos_configuration[NB_OF_SERVOS] =
 	},
 	{
 		"J11",
-		SERVO_CLOSE,  // close position
-		SERVO_OPEN,  // open position
+		200,   // open position
+		500,  // close position
 		11,
 		11
 	},

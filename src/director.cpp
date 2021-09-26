@@ -316,23 +316,44 @@ void Flight::tick()
 				flight.sampling = false;
 			}
 
-			if (flight.valvesClosed != true && state_cnt == 1)
-			{
-				servos.closeSequence();
-			}
+			//if (flight.valvesClosed != true && state_cnt == 1)
+			//{
+			//	servos.closeSequence();
+			//}
 
-			if (state_cnt >= 0)
+			if (flight.valvesClosed != true && state_cnt == 2)
 			{
+				servos.setClosed(7);
+			}
+			if (flight.valvesClosed != true && state_cnt == 7)
+			{
+				servos.setClosed(6);
+			}
+			if (flight.valvesClosed != true && state_cnt == 12)
+			{
+				servos.setClosed(5);
+			}
+			if (flight.valvesClosed != true && state_cnt == 17)
+			{
+				servos.setClosed(4);
+			}
+			if (flight.valvesClosed != true && state_cnt == 22)
+			{
+				servos.setClosed(3);
+			}
+			if (flight.valvesClosed != true && state_cnt == 27)
+			{
+				servos.setClosed(2);
+			}
+			if (flight.valvesClosed != true && state_cnt == 32)
+			{
+				servos.setClosed(1);
 				pwms.set(PWM_PUMP_1, PUMP_SAMPLING_OFF_PWM_VALUE);
 			}
-			if (state_cnt >= 1)
+			if (flight.valvesClosed != true && state_cnt == 37)
 			{
-				pwms.set(PWM_PUMP_2, PUMP_SAMPLING_OFF_PWM_VALUE);
-			}
-			if (state_cnt >= 40)
-			{
-				// Actually check state of the servo machine?
 				flight.valvesClosed = true;
+				pwms.set(PWM_PUMP_2, PUMP_SAMPLING_OFF_PWM_VALUE);
 			}
 			
 			// ONLY USE THE LOGIC BELOW TO CHANGE STATES IF WE ARE ==NOT==
