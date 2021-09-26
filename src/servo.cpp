@@ -62,13 +62,13 @@ const servo_configuration_t servos_configuration[NB_OF_SERVOS] =
 	},
 	{
 		"J8",
-		SERVO_OPEN,
-		SERVO_CLOSE,
+		300,
+		700,
 		14,
 		8
 	}
 };
-#else
+#else // GROUND BOX
 const servo_configuration_t servos_configuration[NB_OF_SERVOS] = 
 {
 	{
@@ -80,8 +80,8 @@ const servo_configuration_t servos_configuration[NB_OF_SERVOS] =
 	},
 	{
 		"J13",
-		SERVO_OPEN,  // open position
-		SERVO_CLOSE,  // close position
+		SERVO_CLOSE,  // open position
+		SERVO_OPEN,  // close position
 		9,
 		13
 	},
@@ -115,8 +115,8 @@ const servo_configuration_t servos_configuration[NB_OF_SERVOS] =
 	},
 	{
 		"J8",
-		SERVO_OPEN,
-		SERVO_CLOSE,
+		300,
+		700,
 		14,
 		8
 	}

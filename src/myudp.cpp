@@ -1,4 +1,5 @@
 #include "myudp.h"
+#include "config.h"
 
 // Enter a MAC address and IP address for your controller below.
 // The IP address will be dependent on your local network:
@@ -6,24 +7,21 @@ byte mac[6] = {0xA8, 0x61, 0x0A, 0xAE, 0x75, 0x4F};
 
 #define RECONNECT_SECONDS_INTERVAL 15
 
-#define HACKERSPACE_TESTING
 
-#ifdef HACKERSPACE_TESTING
-	// actually it can be assigned to us automatically
-	// by DHCP, at least in my home //Szymon
-	IPAddress our_ip(192, 168, 1, 105);
-	// IP address we will be sending data to
-	IPAddress ground_ip(192, 168, 1, 100);
-	// port on which we will be listening for data
-	unsigned long our_port = 2137;
-	// port we are sending data to
-	unsigned long ground_port = 64341;
-#else
-	// TO DO: change to actual addresses used in BEXUS
-	IPAddress ip(192, 168, 1, 3);
-	IPAddress ground_ip(192, 168, 1, 1);
-	unsigned long port = 2137;
-#endif
+// actually it can be assigned to us automatically
+// by DHCP, at least in my home //Szymon
+IPAddress our_ip(172, 16, 18, 191);
+// IP address we will be sending data to
+IPAddress ground_ip(172, 16, 18, 190);
+// port on which we will be listening for data
+unsigned long our_port = 2137;
+// port we are sending data to
+unsigned long ground_port = 64341;
+
+// TO DO: change to actual addresses used in BEXUS
+//IPAddress ip(192, 168, 1, 3);
+//IPAddress ground_ip(192, 168, 1, 1);
+//unsigned long port = 2137;
 
 int MyUDP::initConnection(void)
 {

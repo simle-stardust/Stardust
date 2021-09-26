@@ -1,7 +1,7 @@
 
 
-//#define FLIGHT_BOX
-#define GROUND_BOX
+#define FLIGHT_BOX
+//#define GROUND_BOX
 
 #if (defined FLIGHT_BOX) && (defined GROUND_BOX)
   #error "Define only one config"

@@ -1,6 +1,6 @@
 #include "logger.h"
 
-//#define LOGGER_DEBUG
+#define LOGGER_DEBUG
 
 void Logger::init(MySD *_flash, MySensors *_sensors, MyUDP *_udp, MyADC*_adc, MyServo *_servos, MyPWMs * _pwms)
 {
